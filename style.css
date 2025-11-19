@@ -5,7 +5,6 @@
 :root {
   --bg: #050814;
   --panel: #050b16;
-  --panel-soft: #071020;
   --border: #162035;
   --accent-red: #ff2740;
   --accent-green: #22c55e;
@@ -22,14 +21,14 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* HUD (TOP MOBILE BAR) */
+/* HERO / HUD */
 #hud {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 6px 10px;
-  background: rgba(5, 8, 20, 0.96);
-  backdrop-filter: blur(14px);
+  align-items: flex-start;
+  padding: 10px 12px 8px;
+  background: radial-gradient(circle at top, #111827 0, #020617 55%, #020617 100%);
+  backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -44,63 +43,105 @@ body {
 
 .hud-logo {
   display: flex;
-  align-items: baseline;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
 }
-
 .bloodliner-b {
   font-weight: 900;
-  font-size: 18px;
+  font-size: 24px;
   color: var(--accent-red);
-  text-shadow: 0 0 12px rgba(248, 113, 113, 0.8);
+  text-shadow: 0 0 16px rgba(248, 113, 113, 0.95);
+}
+.hud-logo-text {
+  display: flex;
+  flex-direction: column;
 }
 .bloodliner-title {
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.2em;
+  color: var(--text-main);
+}
+.bloodliner-sub {
+  font-size: 10px;
   color: var(--text-muted);
 }
 
 .hud-gauges {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  margin-top: 4px;
 }
 .gauge {
   display: flex;
   flex-direction: column;
   font-size: 10px;
-  align-items: flex-start;
 }
 .gauge span {
   color: var(--accent-blue);
   font-size: 9px;
 }
 .gauge strong {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .hud-right {
   display: flex;
   gap: 6px;
-  align-items: center;
+  align-items: flex-start;
 }
 .hud-chip {
   border-radius: 999px;
   padding: 4px 8px;
   border: 1px solid var(--border);
-  background: radial-gradient(circle at top, rgba(56,189,248,0.15), rgba(15,23,42,0.8));
+  background: radial-gradient(circle at top, rgba(56,189,248,0.2), rgba(15,23,42,0.95));
   display: flex;
   flex-direction: column;
   font-size: 9px;
-  min-width: 52px;
+  min-width: 54px;
 }
 .hud-chip.small {
-  min-width: 64px;
+  min-width: 70px;
 }
 .hud-chip span {
   color: var(--text-muted);
 }
 .hud-chip strong {
   font-size: 13px;
+}
+
+/* ESPN TICKER */
+#ticker {
+  height: 26px;
+  background: linear-gradient(90deg, #111827, #020617);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+#ticker-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  white-space: nowrap;
+  animation: tickerMove 22s linear infinite;
+}
+#ticker-label {
+  background: var(--accent-red);
+  color: #020617;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+#ticker-text {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@keyframes tickerMove {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-40%); }
 }
 
 /* LAYOUT */
@@ -121,8 +162,8 @@ body {
 }
 .card h2 {
   margin-top: 0;
-  font-size: 13px;
-  letter-spacing: 0.18em;
+  font-size: 12px;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--accent-blue);
 }
@@ -141,9 +182,9 @@ body {
 }
 .quick-main-stat {
   flex: 1.3;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.28), rgba(59, 130, 246, 0.12));
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(59, 130, 246, 0.18));
   border-radius: 12px;
-  border: 1px solid rgba(248, 113, 113, 0.6);
+  border: 1px solid rgba(248, 113, 113, 0.7);
   padding: 6px 8px;
   display: flex;
   flex-direction: column;
@@ -194,14 +235,22 @@ body {
 }
 .qa-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.qa-row::-webkit-scrollbar {
+  height: 4px;
+}
+.qa-row::-webkit-scrollbar-thumb {
+  background: #1f2937;
+  border-radius: 999px;
 }
 .qa-btn {
-  flex: 1;
-  min-width: 40px;
-  padding: 8px 0;
-  border-radius: 999px;
+  flex: 0 0 44px;
+  padding: 9px 0;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: #020617;
   color: var(--text-main);
@@ -223,7 +272,7 @@ body {
   color: var(--text-muted);
 }
 
-/* ARENA */
+/* ARENA STRIP (NETFLIX STYLE ROW) */
 .arena-card {
   padding-bottom: 12px;
 }
@@ -237,16 +286,26 @@ body {
   color: var(--text-muted);
   margin-top: 4px;
 }
-#day-grid {
+.day-strip-wrapper {
   margin-top: 8px;
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.day-strip-wrapper::-webkit-scrollbar {
+  height: 5px;
+}
+.day-strip-wrapper::-webkit-scrollbar-thumb {
+  background: #1f2937;
+  border-radius: 999px;
+}
+#day-grid {
+  display: flex;
+  gap: 8px;
 }
 
-/* DAY TILES */
+/* DAY TILES (ESPN PLAYER CARD STYLE) */
 .day {
-  width: 100%;
+  flex: 0 0 52px;
   aspect-ratio: 3/4;
   perspective: 800px;
 }
@@ -270,7 +329,7 @@ body {
   border: 1px solid var(--border);
 }
 .day-front {
-  background: radial-gradient(circle at top, rgba(148,163,184,0.12), #020617);
+  background: radial-gradient(circle at top, rgba(148,163,184,0.18), #020617);
   color: var(--text-main);
   font-size: 13px;
   font-weight: 600;
@@ -356,6 +415,13 @@ body {
   overflow-y: auto;
   margin-top: 4px;
 }
+#habits-list::-webkit-scrollbar {
+  width: 4px;
+}
+#habits-list::-webkit-scrollbar-thumb {
+  background: #1f2937;
+  border-radius: 999px;
+}
 .habit-pill {
   display: flex;
   justify-content: space-between;
@@ -404,7 +470,7 @@ body {
   z-index: 60;
 }
 
-/* DAY MODAL (BOTTOM SHEET STYLE) */
+/* DAY MODAL (BOTTOM SHEET) */
 #day-modal {
   width: 100%;
   max-width: 480px;
@@ -573,15 +639,17 @@ body {
   margin-bottom: 4px;
 }
 
+/* SCROLL HELPERS */
+#habits-body {
+  margin-top: 4px;
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
-  #day-grid {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-  }
 }
 @media (max-width: 480px) {
   #hud {
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 6px;
   }
 }
