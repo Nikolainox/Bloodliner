@@ -554,6 +554,18 @@ body {
   color: #020617;
 }
 
+/* PÄIVÄN ENERGIA-BREAKDOWN */
+#energy-breakdown {
+  list-style: none;
+  padding-left: 0;
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+#energy-breakdown li {
+  margin-bottom: 2px;
+}
+
 /* SHOTS */
 .shots-line {
   font-size: 13px;
@@ -645,11 +657,10 @@ body {
 }
 
 /* RESPONSIVE */
-@media (max-width: 768px) {
-}
 @media (max-width: 480px) {
   #hud {
     flex-wrap: wrap;
     gap: 6px;
   }
 }
+
