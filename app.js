@@ -1,8 +1,8 @@
 /* ------------------------------------------------------
-   BLOODLINER 90 — HABITS + BEHAVIOR ECONOMY
+   BLOODLINER 90 — Mobile Sports Edition + Behavior Economy
 ------------------------------------------------------ */
 
-let data = JSON.parse(localStorage.getItem("bloodlinerDataV2")) || {
+let data = JSON.parse(localStorage.getItem("bloodlinerDataV3")) || {
   habits: [],
   days: {},
   xp: 0,
@@ -14,7 +14,7 @@ let data = JSON.parse(localStorage.getItem("bloodlinerDataV2")) || {
 };
 
 function save() {
-  localStorage.setItem("bloodlinerDataV2", JSON.stringify(data));
+  localStorage.setItem("bloodlinerDataV3", JSON.stringify(data));
 }
 
 /* INIT DAYS + BACKFILL */
@@ -70,11 +70,20 @@ const btnGlobalShot = document.getElementById("btn-global-shot");
 
 const energyButtons = document.querySelectorAll(".energy-btn");
 
+/* QUICK BAR & QA */
+const qaButtons = document.querySelectorAll(".qa-btn");
+const qaShotBtn = document.getElementById("qa-shot");
+const qaActiveDay = document.getElementById("qa-active-day");
+
+/* HABITS */
 const addHabitForm = document.getElementById("add-habit-form");
 const habitInput = document.getElementById("habit-input");
 const habitsList = document.getElementById("habits-list");
 const habitCount = document.getElementById("habit-count");
+const habitsBody = document.getElementById("habits-body");
+const toggleHabitsBtn = document.getElementById("toggle-habits");
 
+/* REVIEW */
 const reviewBackdrop = document.getElementById("review-backdrop");
 const btnOpenReview = document.getElementById("open-review");
 const btnCloseReview = document.getElementById("btn-close-review");
@@ -88,15 +97,11 @@ const hudStreak = document.getElementById("hud-streak");
 const hudHabits = document.getElementById("hud-habits");
 const hudShots = document.getElementById("hud-shots");
 
-/* PLAYER CARD */
-const pcLevel = document.getElementById("pc-level");
-const pcXP = document.getElementById("pc-xp");
-const pcDays = document.getElementById("pc-days");
-const pcAverage = document.getElementById("pc-average");
+/* PLAYER CARD QUICK */
 const pcLastScore = document.getElementById("pc-last-score");
-const pcMoodFocus = document.getElementById("pc-mood-focus");
 const pcEnergy = document.getElementById("pc-energy");
 const pcBehaviorAvg = document.getElementById("pc-behavior-avg");
+const pcMoodFocus = document.getElementById("pc-mood-focus");
 const pcGoalAccuracy = document.getElementById("pc-goal-accuracy");
 const pcGoalAmbition = document.getElementById("pc-goal-ambition");
 const pcGoalRealism = document.getElementById("pc-goal-realism");
@@ -108,7 +113,7 @@ const bossWeakness = document.getElementById("boss-weakness");
 const bossGoal = document.getElementById("boss-goal");
 const bossReward = document.getElementById("boss-reward");
 
-let activeDay = null;
+let activeDay = 1;
 
 /* HABITS */
 function renderHabits() {
@@ -123,6 +128,7 @@ function renderHabits() {
     habitsList.appendChild(div);
   });
   habitCount.textContent = `${data.habits.length} habits`;
+  hudHabits.textContent = data.habits.length;
   save();
 }
 
@@ -130,13 +136,11 @@ habitsList.addEventListener("click", e => {
   if (e.target.tagName === "BUTTON") {
     const h = e.target.dataset.habit;
     data.habits = data.habits.filter(x => x !== h);
-    for (let i = 1; i <= 90; i++) {
-      delete data.days[i].habits[h];
-    }
+    for (let i = 1; i <= 90; i++) delete data.days[i].habits[h];
     renderHabits();
     renderArena();
     updateHUD();
-    updatePlayerCard();
+    updateQuickCard();
     save();
   }
 });
@@ -150,8 +154,16 @@ addHabitForm.addEventListener("submit", e => {
   renderHabits();
   renderArena();
   updateHUD();
-  updatePlayerCard();
+  updateQuickCard();
   save();
+});
+
+toggleHabitsBtn.addEventListener("click", () => {
+  if (habitsBody.style.display === "none") {
+    habitsBody.style.display = "block";
+  } else {
+    habitsBody.style.display = "none";
+  }
 });
 
 /* ARENA */
@@ -175,10 +187,11 @@ dayGrid.addEventListener("click", e => {
   const inner = e.target.closest(".day-inner");
   if (!inner) return;
   activeDay = parseInt(inner.dataset.day, 10);
+  qaActiveDay.textContent = `Day ${activeDay}`;
   openDayModal(activeDay);
 });
 
-/* OPEN DAY MODAL */
+/* MODAL OPEN/CLOSE */
 function openDayModal(n) {
   const d = data.days[n];
   modalTitle.textContent = `DAY ${n}`;
@@ -211,12 +224,14 @@ function openDayModal(n) {
   modalDayShots.textContent = d.shots;
 
   modalBackdrop.style.display = "flex";
+  qaActiveDay.textContent = `Day ${n}`;
 }
 
 btnCloseModal.addEventListener("click", () => {
   modalBackdrop.style.display = "none";
 });
 
+/* HABITS TOGGLE IN MODAL */
 modalHabits.addEventListener("change", e => {
   if (e.target.type === "checkbox") {
     const h = e.target.dataset.habit;
@@ -230,38 +245,6 @@ document.getElementById("btn-set-goal").addEventListener("click", () => {
   const v = parseInt(goalTargetInput.value);
   if (!v || v < 1 || v > 100) return;
   data.days[activeDay].goal = v;
-  save();
-});
-
-/* ENERGY EVENTS */
-energyButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const d = data.days[activeDay];
-    d.energy.push({
-      type: btn.dataset.type,
-      time: Date.now()
-    });
-    btn.classList.add("flash");
-    setTimeout(() => btn.classList.remove("flash"), 200);
-    d.behaviorValue = computeBehaviorValue(d);
-    if (activeDay) modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
-    save();
-  });
-});
-
-/* SHOTS */
-btnDayShot.addEventListener("click", () => {
-  const d = data.days[activeDay];
-  d.shots++;
-  modalDayShots.textContent = d.shots;
-  d.behaviorValue = computeBehaviorValue(d);
-  modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
-  save();
-});
-
-btnGlobalShot.addEventListener("click", () => {
-  data.globalShots++;
-  hudShots.textContent = data.globalShots;
   save();
 });
 
@@ -280,13 +263,79 @@ function computeBehaviorValue(d) {
   return Math.round(value * 10) / 10;
 }
 
+/* ENERGY EVENTS IN MODAL */
+energyButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const d = data.days[activeDay];
+    d.energy.push({
+      type: btn.dataset.type,
+      time: Date.now()
+    });
+    btn.classList.add("flash");
+    setTimeout(() => btn.classList.remove("flash"), 180);
+    d.behaviorValue = computeBehaviorValue(d);
+    modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+    save();
+  });
+});
+
+/* QUICK BAR EMOJI BUTTONS (log to active day) */
+qaButtons.forEach(btn => {
+  const t = btn.dataset.type;
+  if (!t) return;
+  btn.addEventListener("click", () => {
+    const d = data.days[activeDay];
+    d.energy.push({
+      type: t,
+      time: Date.now()
+    });
+    btn.classList.add("flash");
+    setTimeout(() => btn.classList.remove("flash"), 160);
+    d.behaviorValue = computeBehaviorValue(d);
+    if (modalBackdrop.style.display === "flex") {
+      modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+    }
+    updateQuickCard();
+    save();
+  });
+});
+
+/* SHOTS */
+btnDayShot.addEventListener("click", () => {
+  const d = data.days[activeDay];
+  d.shots++;
+  modalDayShots.textContent = d.shots;
+  d.behaviorValue = computeBehaviorValue(d);
+  modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+  save();
+});
+
+qaShotBtn.addEventListener("click", () => {
+  const d = data.days[activeDay];
+  d.shots++;
+  d.behaviorValue = computeBehaviorValue(d);
+  qaShotBtn.classList.add("flash");
+  setTimeout(() => qaShotBtn.classList.remove("flash"), 160);
+  if (modalBackdrop.style.display === "flex") {
+    modalDayShots.textContent = d.shots;
+    modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+  }
+  save();
+});
+
+btnGlobalShot.addEventListener("click", () => {
+  data.globalShots++;
+  hudShots.textContent = data.globalShots;
+  save();
+});
+
 /* FINALIZE DAY */
 btnFinalize.addEventListener("click", () => {
   finalizeDay(activeDay);
   modalBackdrop.style.display = "none";
   renderArena();
   updateHUD();
-  updatePlayerCard();
+  updateQuickCard();
   updateBoss();
 });
 
@@ -300,14 +349,12 @@ function finalizeDay(n) {
   const habitCount = Object.values(d.habits).filter(x => x === 1).length;
   d.score = Math.round((habitCount / (data.habits.length || 1)) * 100);
 
-  // goal result
   if (!d.goal) d.goalResult = "NO GOAL";
   else if (d.score >= d.goal * 1.15) d.goalResult = "OVERDRIVE";
   else if (d.score >= d.goal) d.goalResult = "PASS";
   else if (d.score >= d.goal * 0.8) d.goalResult = "NEAR MISS";
   else d.goalResult = "FAIL";
 
-  // PR
   const prevScores = [];
   for (let i = 1; i < n; i++) {
     if (data.days[i].score !== null) prevScores.push(data.days[i].score);
@@ -317,10 +364,8 @@ function finalizeDay(n) {
     : 0;
   d.pr = prevScores.length ? Math.round(d.score - avgPrev) : 0;
 
-  // behavior value
   d.behaviorValue = computeBehaviorValue(d);
 
-  // XP
   const xpGain = d.score + (d.goalResult === "OVERDRIVE" ? 20 : 0) + d.pr;
   data.xp += Math.max(0, xpGain);
 
@@ -375,20 +420,18 @@ function updateHUD() {
   hudShots.textContent = data.globalShots;
 }
 
-/* PLAYER CARD */
-function updatePlayerCard() {
+/* QUICK CARD / PLAYER SNAPSHOT */
+function updateQuickCard() {
   const scores = [];
-  let lastScore = "—";
-  let totalDays = 0;
   const behaviors = [];
   const moods = [];
   const focs = [];
+  let lastScore = "—";
 
   for (let i = 1; i <= 90; i++) {
     const d = data.days[i];
     if (d.score !== null) {
       scores.push(d.score);
-      totalDays++;
       lastScore = d.score;
     }
     if (typeof d.behaviorValue === "number") behaviors.push(d.behaviorValue);
@@ -396,22 +439,17 @@ function updatePlayerCard() {
     if (d.focus) focs.push(d.focus);
   }
 
-  const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b)/scores.length) : "—";
   const bAvg = behaviors.length
     ? Math.round((behaviors.reduce((a,b)=>a+b)/behaviors.length)*10)/10
     : "—";
 
-  pcLevel.textContent = data.level;
-  pcXP.textContent = data.xp;
-  pcDays.textContent = totalDays;
-  pcAverage.textContent = avg;
   pcLastScore.textContent = lastScore;
   pcBehaviorAvg.textContent = bAvg;
+  pcEnergy.textContent = predictEnergy();
 
   const mAvg = moods.length ? Math.round(moods.reduce((a,b)=>a+b)/moods.length) : "—";
   const fAvg = focs.length ? Math.round(focs.reduce((a,b)=>a+b)/focs.length) : "—";
   pcMoodFocus.textContent = `${mAvg}/${fAvg}`;
-  pcEnergy.textContent = predictEnergy();
 
   const gRes = { PASS:0, OVERDRIVE:0, FAIL:0, "NEAR MISS":0 };
   let gSet = 0;
@@ -527,7 +565,7 @@ function renderReview() {
         label: "Score",
         data: scores,
         borderWidth: 2,
-        tension: 0.3
+        tension: 0.35
       }]
     }
   });
@@ -537,8 +575,8 @@ function renderReview() {
     data: {
       labels: [...Array(90).keys()].map(x => x + 1),
       datasets: [
-        { label: "Mood", data: mood, borderWidth: 2 },
-        { label: "Focus", data: focus, borderWidth: 2 }
+        { label: "Mood", data: mood, borderWidth: 2, tension: 0.3 },
+        { label: "Focus", data: focus, borderWidth: 2, tension: 0.3 }
       ]
     }
   });
@@ -551,7 +589,7 @@ function renderReview() {
         label: "Behavior Value",
         data: behavior,
         borderWidth: 2,
-        tension: 0.3
+        tension: 0.35
       }]
     }
   });
@@ -566,8 +604,9 @@ function renderInsights() {
 
   let best = { score: -1, day: null };
   let worst = { score: 999, day: null };
+  let totalShots = 0;
 
-  let energyTotals = {
+  const energyTotals = {
     Water: 0,
     Move: 0,
     Protein: 0,
@@ -575,7 +614,6 @@ function renderInsights() {
     Meal: 0,
     Nicotine: 0
   };
-  let totalShots = 0;
 
   for (let i = 1; i <= 90; i++) {
     const d = data.days[i];
@@ -584,9 +622,7 @@ function renderInsights() {
       if (d.score < worst.score) { worst.score = d.score; worst.day = i; }
     }
     (d.energy || []).forEach(ev => {
-      if (energyTotals[ev.type] !== undefined) {
-        energyTotals[ev.type]++;
-      }
+      if (energyTotals[ev.type] !== undefined) energyTotals[ev.type]++;
     });
     totalShots += d.shots || 0;
   }
@@ -635,5 +671,6 @@ function renderInsights() {
 renderHabits();
 renderArena();
 updateHUD();
-updatePlayerCard();
+updateQuickCard();
 updateBoss();
+qaActiveDay.textContent = `Day ${activeDay}`;
