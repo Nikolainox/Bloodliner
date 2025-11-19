@@ -1,5 +1,5 @@
 /* ------------------------------------------------------
-   BLOODLINER 90 — Netflix + ESPN Edition
+   BLOODLINER 90 — Netflix + ESPN Edition + Energy Breakdown
 ------------------------------------------------------ */
 
 let data = JSON.parse(localStorage.getItem("bloodlinerDataV4")) || {
@@ -69,6 +69,7 @@ const btnDayShot = document.getElementById("btn-day-shot");
 const btnGlobalShot = document.getElementById("btn-global-shot");
 
 const energyButtons = document.querySelectorAll(".energy-btn");
+const energyBreakdown = document.getElementById("energy-breakdown");
 
 /* QUICK BAR & QA */
 const qaButtons = document.querySelectorAll(".qa-btn");
@@ -230,6 +231,8 @@ function openDayModal(n) {
   focusInput.value = d.focus ?? "";
   modalDayShots.textContent = d.shots;
 
+  renderEnergyBreakdown(d);
+
   modalBackdrop.style.display = "flex";
   qaActiveDay.textContent = `Day ${n}`;
 }
@@ -270,6 +273,43 @@ function computeBehaviorValue(d) {
   return Math.round(value * 10) / 10;
 }
 
+/* PÄIVÄN ENERGIA-BREAKDOWN */
+function renderEnergyBreakdown(d) {
+  if (!energyBreakdown) return;
+  const counts = {
+    Water: 0,
+    Move: 0,
+    Protein: 0,
+    Coffee: 0,
+    Meal: 0,
+    Nicotine: 0
+  };
+  (d.energy || []).forEach(ev => {
+    if (counts[ev.type] !== undefined) counts[ev.type]++;
+  });
+  const shots = d.shots || 0;
+
+  const emojis = {
+    Water: "💧",
+    Move: "🏃‍♂️",
+    Protein: "🍫💪",
+    Coffee: "☕",
+    Meal: "🍽️",
+    Nicotine: "🚬❌"
+  };
+
+  energyBreakdown.innerHTML = "";
+  Object.entries(counts).forEach(([type, count]) => {
+    if (!count) return;
+    const li = document.createElement("li");
+    li.textContent = `${emojis[type]} ${type}: ${count}`;
+    energyBreakdown.appendChild(li);
+  });
+  const liShots = document.createElement("li");
+  liShots.textContent = `💣 Shots: ${shots}`;
+  energyBreakdown.appendChild(liShots);
+}
+
 /* ENERGY EVENTS IN MODAL */
 energyButtons.forEach(btn => {
   btn.addEventListener("click", () => {
@@ -282,6 +322,7 @@ energyButtons.forEach(btn => {
     setTimeout(() => btn.classList.remove("flash"), 180);
     d.behaviorValue = computeBehaviorValue(d);
     modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+    renderEnergyBreakdown(d);
     updateQuickCard();
     updateTicker();
     save();
@@ -303,6 +344,7 @@ qaButtons.forEach(btn => {
     d.behaviorValue = computeBehaviorValue(d);
     if (modalBackdrop.style.display === "flex") {
       modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+      renderEnergyBreakdown(d);
     }
     updateQuickCard();
     updateTicker();
@@ -317,6 +359,7 @@ btnDayShot.addEventListener("click", () => {
   modalDayShots.textContent = d.shots;
   d.behaviorValue = computeBehaviorValue(d);
   modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+  renderEnergyBreakdown(d);
   updateQuickCard();
   updateTicker();
   save();
@@ -331,6 +374,7 @@ qaShotBtn.addEventListener("click", () => {
   if (modalBackdrop.style.display === "flex") {
     modalDayShots.textContent = d.shots;
     modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+    renderEnergyBreakdown(d);
   }
   updateQuickCard();
   updateTicker();
