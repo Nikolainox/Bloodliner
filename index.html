@@ -2,77 +2,130 @@
 <html lang="fi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bloodliner 90 • Habit Arena</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Bloodliner 90 • Arena</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-  <!-- HUD -->
+  <!-- TOP HUD / MOBILE STICKY BAR -->
   <header id="hud">
-    <div><span>Avg</span><strong id="hud-avg">—</strong></div>
-    <div><span>PR</span><strong id="hud-pr">—</strong></div>
-    <div><span>XP</span><strong id="hud-xp">0</strong></div>
-    <div><span>Lvl</span><strong id="hud-level">1</strong></div>
-    <div><span>Streak</span><strong id="hud-streak">0</strong></div>
-    <div><span>Habits</span><strong id="hud-habits">0</strong></div>
-    <div><span>Shots</span><strong id="hud-shots">0</strong></div>
-  </header>
-
-  <main id="layout">
-    <!-- PLAYER CARD -->
-    <section id="player-card" class="card">
-      <h2>PLAYER CARD</h2>
-      <div class="pc-grid">
-        <div class="pc-main">
-          <div class="pc-stat big">
-            <span>LEVEL</span>
-            <strong id="pc-level">1</strong>
-          </div>
-          <div class="pc-stat big">
-            <span>XP</span>
-            <strong id="pc-xp">0</strong>
-          </div>
-          <div class="pc-stat">
-            <span>DAYS</span>
-            <strong id="pc-days">0</strong>
-          </div>
-          <div class="pc-stat">
-            <span>AVG</span>
-            <strong id="pc-average">—</strong>
-          </div>
-          <div class="pc-stat">
-            <span>LAST SCORE</span>
-            <strong id="pc-last-score">—</strong>
-          </div>
-          <div class="pc-stat">
-            <span>MOOD / FOCUS</span>
-            <strong id="pc-mood-focus">—</strong>
-          </div>
-          <div class="pc-stat">
-            <span>TOMORROW ENERGY</span>
-            <strong id="pc-energy">—</strong>
-          </div>
-          <div class="pc-stat">
-            <span>BEHAVIOR AVG</span>
-            <strong id="pc-behavior-avg">—</strong>
-          </div>
+    <div class="hud-left">
+      <div class="hud-logo">
+        <span class="bloodliner-b">B</span>
+        <span class="bloodliner-title">BLOODLINER 90</span>
+      </div>
+      <div class="hud-gauges">
+        <div class="gauge">
+          <span>AVG</span>
+          <strong id="hud-avg">—</strong>
         </div>
-        <div class="pc-goal">
-          <h3>GOAL METRICS</h3>
-          <p><span>Accuracy</span><strong id="pc-goal-accuracy">0%</strong></p>
-          <p><span>Ambition</span><strong id="pc-goal-ambition">0%</strong></p>
-          <p><span>Realism</span><strong id="pc-goal-realism">0%</strong></p>
-          <p><span>Boss</span><strong id="pc-boss">—</strong></p>
+        <div class="gauge">
+          <span>PR</span>
+          <strong id="hud-pr">—</strong>
         </div>
       </div>
-      <button id="open-review" class="btn ghost">90 DAY REVIEW</button>
+    </div>
+    <div class="hud-right">
+      <div class="hud-chip">
+        <span>LVL</span>
+        <strong id="hud-level">1</strong>
+      </div>
+      <div class="hud-chip">
+        <span>XP</span>
+        <strong id="hud-xp">0</strong>
+      </div>
+      <div class="hud-chip small">
+        <span>STREAK</span>
+        <strong id="hud-streak">0</strong>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN MOBILE STACK -->
+  <main id="layout">
+
+    <!-- QUICK BAR: SPORTS HUD -->
+    <section id="quick-bar" class="card">
+      <div class="quick-row">
+        <div class="quick-main-stat">
+          <span>BEHAVIOR AVG</span>
+          <strong id="pc-behavior-avg">—</strong>
+        </div>
+        <div class="quick-stat">
+          <span>LAST SCORE</span>
+          <strong id="pc-last-score">—</strong>
+        </div>
+        <div class="quick-stat">
+          <span>ENERGY TOMORROW</span>
+          <strong id="pc-energy">—</strong>
+        </div>
+      </div>
+      <div class="quick-row bottom">
+        <div class="quick-chip">
+          <span>MOOD/FOCUS</span>
+          <strong id="pc-mood-focus">—</strong>
+        </div>
+        <div class="quick-chip">
+          <span>HABITS</span>
+          <strong id="hud-habits">0</strong>
+        </div>
+        <div class="quick-chip">
+          <span>SHOTS</span>
+          <strong id="hud-shots">0</strong>
+        </div>
+      </div>
     </section>
 
-    <!-- BOSS CARD -->
+    <!-- QUICK ACTION STRIP (BIG EMOJI BUTTONS) -->
+    <section id="quick-actions" class="card">
+      <h2>GAME BAR</h2>
+      <p class="hint">Tap to log events – nopea painallus, ei säätöä.</p>
+      <div class="qa-row">
+        <button class="qa-btn" data-type="Water">💧</button>
+        <button class="qa-btn" data-type="Move">🏃‍♂️</button>
+        <button class="qa-btn" data-type="Protein">🍫💪</button>
+        <button class="qa-btn" data-type="Coffee">☕</button>
+        <button class="qa-btn" data-type="Meal">🍽️</button>
+        <button class="qa-btn" data-type="Nicotine">🚬❌</button>
+        <button class="qa-btn danger" id="qa-shot">💣</button>
+      </div>
+      <p class="qa-label">Aktiivinen päivä: <span id="qa-active-day">—</span></p>
+    </section>
+
+    <!-- ARENA: 90 DAY GRID -->
+    <section id="arena" class="card arena-card">
+      <div class="arena-header">
+        <h2>90 DAY ARENA</h2>
+        <button id="btn-global-shot" class="btn ghost small">Global 💣</button>
+      </div>
+      <p class="arena-sub">Klikkaa päivää → statsit → finalize → kortti flippaa kuten player card.</p>
+      <div id="day-grid"></div>
+    </section>
+
+    <!-- HABITS (COLLAPSIBLE) -->
+    <section id="habits" class="card">
+      <div class="section-title-row">
+        <h2>HABITS</h2>
+        <button id="toggle-habits" class="btn ghost tiny">Näytä / Piilota</button>
+      </div>
+      <div id="habits-body">
+        <form id="add-habit-form">
+          <input id="habit-input" placeholder="Lisää uusi habit…" />
+          <button type="submit" class="btn primary small">+</button>
+        </form>
+        <p id="habit-count"></p>
+        <div id="habits-list"></div>
+      </div>
+    </section>
+
+    <!-- BOSS + REVIEW BUTTON -->
     <section id="boss-card" class="card">
-      <h2>WEEKLY BOSS</h2>
+      <div class="section-title-row">
+        <h2>WEEKLY BOSS</h2>
+        <button id="open-review" class="btn ghost tiny">Review 90d</button>
+      </div>
       <div id="boss-inner">
         <p id="boss-name" class="boss-name">Ei bossia vielä – kerää dataa.</p>
         <p id="boss-weakness" class="boss-line"></p>
@@ -81,32 +134,15 @@
       </div>
     </section>
 
-    <!-- HABITS -->
-    <section id="habits" class="card">
-      <h2>HABITS</h2>
-      <form id="add-habit-form">
-        <input id="habit-input" placeholder="Lisää uusi habit…" />
-        <button type="submit" class="btn primary">+</button>
-      </form>
-      <p id="habit-count"></p>
-      <div id="habits-list"></div>
-    </section>
-
-    <!-- ARENA -->
-    <section id="arena" class="card">
-      <div class="arena-header">
-        <h2>90 DAY ARENA</h2>
-        <button id="btn-global-shot" class="btn warning">💣 GLOBAL SHOT</button>
-      </div>
-      <p class="arena-sub">Klikkaa päivää → avaa kortti → finalize ja flippaa.</p>
-      <div id="day-grid"></div>
-    </section>
   </main>
 
-  <!-- DAY MODAL -->
+  <!-- DAY MODAL (FULL SCREEN MOBILE PANEL) -->
   <div id="modal-backdrop">
     <div id="day-modal">
-      <h2 id="modal-title">Päivä</h2>
+      <div class="modal-header">
+        <h2 id="modal-title">DAY</h2>
+        <button id="btn-close-modal" class="btn ghost tiny">Close</button>
+      </div>
 
       <section class="modal-section">
         <h3>Habits</h3>
@@ -115,8 +151,10 @@
 
       <section class="modal-section">
         <h3>Päivän tavoite %</h3>
-        <input id="goal-target-input" type="number" min="1" max="100" placeholder="esim. 80" />
-        <button id="btn-set-goal" class="btn primary small">Set Goal</button>
+        <div class="inline-row">
+          <input id="goal-target-input" type="number" min="1" max="100" placeholder="esim. 80" />
+          <button id="btn-set-goal" class="btn primary tiny">Set</button>
+        </div>
       </section>
 
       <section class="modal-section">
@@ -156,7 +194,6 @@
 
       <div id="modal-actions">
         <button id="btn-finalize" class="btn primary">Finalize Day</button>
-        <button id="btn-close-modal" class="btn danger">Close</button>
       </div>
     </div>
   </div>
@@ -164,7 +201,10 @@
   <!-- REVIEW MODAL -->
   <div id="review-backdrop">
     <div id="review-modal">
-      <h2>90 DAY REVIEW</h2>
+      <div class="modal-header">
+        <h2>90 DAY REVIEW</h2>
+        <button id="btn-close-review" class="btn ghost tiny">Close</button>
+      </div>
 
       <section class="review-section">
         <h3>Score Over 90 Days</h3>
@@ -185,8 +225,6 @@
         <h3>Insights</h3>
         <ul id="insights-list"></ul>
       </section>
-
-      <button id="btn-close-review" class="btn ghost fullwidth">Close</button>
     </div>
   </div>
 
