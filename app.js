@@ -1,8 +1,8 @@
 /* ------------------------------------------------------
-   BLOODLINER 90 — Mobile Sports Edition + Behavior Economy
+   BLOODLINER 90 — Netflix + ESPN Edition
 ------------------------------------------------------ */
 
-let data = JSON.parse(localStorage.getItem("bloodlinerDataV3")) || {
+let data = JSON.parse(localStorage.getItem("bloodlinerDataV4")) || {
   habits: [],
   days: {},
   xp: 0,
@@ -14,7 +14,7 @@ let data = JSON.parse(localStorage.getItem("bloodlinerDataV3")) || {
 };
 
 function save() {
-  localStorage.setItem("bloodlinerDataV3", JSON.stringify(data));
+  localStorage.setItem("bloodlinerDataV4", JSON.stringify(data));
 }
 
 /* INIT DAYS + BACKFILL */
@@ -97,11 +97,13 @@ const hudStreak = document.getElementById("hud-streak");
 const hudHabits = document.getElementById("hud-habits");
 const hudShots = document.getElementById("hud-shots");
 
-/* PLAYER CARD QUICK */
+/* QUICK SNAPSHOT */
 const pcLastScore = document.getElementById("pc-last-score");
 const pcEnergy = document.getElementById("pc-energy");
 const pcBehaviorAvg = document.getElementById("pc-behavior-avg");
 const pcMoodFocus = document.getElementById("pc-mood-focus");
+
+/* Optional goal metrics / boss id (not näkyvissä, joten null-check) */
 const pcGoalAccuracy = document.getElementById("pc-goal-accuracy");
 const pcGoalAmbition = document.getElementById("pc-goal-ambition");
 const pcGoalRealism = document.getElementById("pc-goal-realism");
@@ -112,6 +114,9 @@ const bossName = document.getElementById("boss-name");
 const bossWeakness = document.getElementById("boss-weakness");
 const bossGoal = document.getElementById("boss-goal");
 const bossReward = document.getElementById("boss-reward");
+
+/* TICKER */
+const tickerText = document.getElementById("ticker-text");
 
 let activeDay = 1;
 
@@ -141,6 +146,7 @@ habitsList.addEventListener("click", e => {
     renderArena();
     updateHUD();
     updateQuickCard();
+    updateTicker();
     save();
   }
 });
@@ -155,6 +161,7 @@ addHabitForm.addEventListener("submit", e => {
   renderArena();
   updateHUD();
   updateQuickCard();
+  updateTicker();
   save();
 });
 
@@ -231,7 +238,7 @@ btnCloseModal.addEventListener("click", () => {
   modalBackdrop.style.display = "none";
 });
 
-/* HABITS TOGGLE IN MODAL */
+/* HABITS IN MODAL */
 modalHabits.addEventListener("change", e => {
   if (e.target.type === "checkbox") {
     const h = e.target.dataset.habit;
@@ -275,6 +282,8 @@ energyButtons.forEach(btn => {
     setTimeout(() => btn.classList.remove("flash"), 180);
     d.behaviorValue = computeBehaviorValue(d);
     modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+    updateQuickCard();
+    updateTicker();
     save();
   });
 });
@@ -296,6 +305,7 @@ qaButtons.forEach(btn => {
       modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
     }
     updateQuickCard();
+    updateTicker();
     save();
   });
 });
@@ -307,6 +317,8 @@ btnDayShot.addEventListener("click", () => {
   modalDayShots.textContent = d.shots;
   d.behaviorValue = computeBehaviorValue(d);
   modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+  updateQuickCard();
+  updateTicker();
   save();
 });
 
@@ -320,6 +332,8 @@ qaShotBtn.addEventListener("click", () => {
     modalDayShots.textContent = d.shots;
     modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
   }
+  updateQuickCard();
+  updateTicker();
   save();
 });
 
@@ -337,6 +351,7 @@ btnFinalize.addEventListener("click", () => {
   updateHUD();
   updateQuickCard();
   updateBoss();
+  updateTicker();
 });
 
 function finalizeDay(n) {
@@ -420,7 +435,7 @@ function updateHUD() {
   hudShots.textContent = data.globalShots;
 }
 
-/* QUICK CARD / PLAYER SNAPSHOT */
+/* QUICK CARD / SNAPSHOT */
 function updateQuickCard() {
   const scores = [];
   const behaviors = [];
@@ -459,14 +474,19 @@ function updateQuickCard() {
     gRes[r] = (gRes[r] || 0) + 1;
     gSet++;
   }
-  pcGoalAccuracy.textContent =
-    gSet ? Math.round((gRes.PASS+gRes.OVERDRIVE)/gSet*100)+"%" : "0%";
-  pcGoalAmbition.textContent =
-    gSet ? Math.round(gRes.OVERDRIVE/gSet*100)+"%" : "0%";
-  pcGoalRealism.textContent =
-    gSet ? Math.round((gRes.PASS+gRes["NEAR MISS"])/gSet*100)+"%" : "0%";
+  const acc =
+    gSet ? Math.round((gRes.PASS+gRes.OVERDRIVE)/gSet*100) : 0;
+  const amb =
+    gSet ? Math.round(gRes.OVERDRIVE/gSet*100) : 0;
+  const real =
+    gSet ? Math.round((gRes.PASS+gRes["NEAR MISS"])/gSet*100) : 0;
 
-  pcBoss.textContent = data.currentBoss ?? "—";
+  if (pcGoalAccuracy && pcGoalAmbition && pcGoalRealism) {
+    pcGoalAccuracy.textContent = acc + "%";
+    pcGoalAmbition.textContent = amb + "%";
+    pcGoalRealism.textContent = real + "%";
+  }
+  if (pcBoss) pcBoss.textContent = data.currentBoss ?? "—";
 }
 
 /* BOSS SYSTEM */
@@ -531,6 +551,28 @@ function updateBoss() {
     bossReward.textContent = "Reward: +60 XP";
   }
   save();
+}
+
+/* TICKER (ESPN BAR) */
+function updateTicker() {
+  if (!tickerText) return;
+  if (data.lastCompleted == null) {
+    tickerText.textContent = "Season ready. No games played yet.";
+    return;
+  }
+  const n = data.lastCompleted;
+  const d = data.days[n];
+  const parts = [];
+  parts.push(`DAY ${n}`);
+  if (d.goalResult && d.goalResult !== "NO GOAL") parts.push(d.goalResult);
+  if (d.score !== null) parts.push(`Score ${d.score}%`);
+  parts.push(`Shots ${d.shots || 0}`);
+  if (typeof d.behaviorValue === "number") parts.push(`BV ${d.behaviorValue}`);
+  if (typeof d.pr === "number") {
+    const prText = d.pr >= 0 ? `PR +${d.pr}` : `PR ${d.pr}`;
+    parts.push(prText);
+  }
+  tickerText.textContent = parts.join(" · ");
 }
 
 /* REVIEW MODAL */
@@ -673,4 +715,5 @@ renderArena();
 updateHUD();
 updateQuickCard();
 updateBoss();
+updateTicker();
 qaActiveDay.textContent = `Day ${activeDay}`;
