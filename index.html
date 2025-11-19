@@ -3,18 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Bloodliner 90 • Arena</title>
+  <title>Bloodliner 90 • Season 1</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-  <!-- TOP HUD / MOBILE STICKY BAR -->
+  <!-- HERO + HUD (NETFLIX / ESPN) -->
   <header id="hud">
     <div class="hud-left">
       <div class="hud-logo">
         <span class="bloodliner-b">B</span>
-        <span class="bloodliner-title">BLOODLINER 90</span>
+        <div class="hud-logo-text">
+          <span class="bloodliner-title">BLOODLINER 90</span>
+          <span class="bloodliner-sub">SEASON 1 • YOUR LIFE IN STATS</span>
+        </div>
       </div>
       <div class="hud-gauges">
         <div class="gauge">
@@ -43,10 +46,18 @@
     </div>
   </header>
 
-  <!-- MAIN MOBILE STACK -->
+  <!-- ESPN TICKER -->
+  <div id="ticker">
+    <div id="ticker-inner">
+      <span id="ticker-label">LIVE</span>
+      <span id="ticker-text">Season ready. No games played yet.</span>
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
   <main id="layout">
 
-    <!-- QUICK BAR: SPORTS HUD -->
+    <!-- QUICK SCOREBOARD (ESPN HUD) -->
     <section id="quick-bar" class="card">
       <div class="quick-row">
         <div class="quick-main-stat">
@@ -64,7 +75,7 @@
       </div>
       <div class="quick-row bottom">
         <div class="quick-chip">
-          <span>MOOD/FOCUS</span>
+          <span>MOOD / FOCUS</span>
           <strong id="pc-mood-focus">—</strong>
         </div>
         <div class="quick-chip">
@@ -78,10 +89,10 @@
       </div>
     </section>
 
-    <!-- QUICK ACTION STRIP (BIG EMOJI BUTTONS) -->
+    <!-- NETFLIX STYLE: ACTION RAIL -->
     <section id="quick-actions" class="card">
       <h2>GAME BAR</h2>
-      <p class="hint">Tap to log events – nopea painallus, ei säätöä.</p>
+      <p class="hint">Tap to log – nopea, kevyt, kuin ohjainnäppäin.</p>
       <div class="qa-row">
         <button class="qa-btn" data-type="Water">💧</button>
         <button class="qa-btn" data-type="Move">🏃‍♂️</button>
@@ -91,20 +102,22 @@
         <button class="qa-btn" data-type="Nicotine">🚬❌</button>
         <button class="qa-btn danger" id="qa-shot">💣</button>
       </div>
-      <p class="qa-label">Aktiivinen päivä: <span id="qa-active-day">—</span></p>
+      <p class="qa-label">Aktiivinen päivä: <span id="qa-active-day">Day 1</span></p>
     </section>
 
-    <!-- ARENA: 90 DAY GRID -->
+    <!-- NETFLIX STRIP: 90-DAY ARENA -->
     <section id="arena" class="card arena-card">
       <div class="arena-header">
         <h2>90 DAY ARENA</h2>
         <button id="btn-global-shot" class="btn ghost small">Global 💣</button>
       </div>
-      <p class="arena-sub">Klikkaa päivää → statsit → finalize → kortti flippaa kuten player card.</p>
-      <div id="day-grid"></div>
+      <p class="arena-sub">Swipe → selaa päiviä, tap → statsit, finalize flippaa kuin player card.</p>
+      <div class="day-strip-wrapper">
+        <div id="day-grid"></div>
+      </div>
     </section>
 
-    <!-- HABITS (COLLAPSIBLE) -->
+    <!-- HABITS (ADD / DELETE) -->
     <section id="habits" class="card">
       <div class="section-title-row">
         <h2>HABITS</h2>
@@ -120,7 +133,7 @@
       </div>
     </section>
 
-    <!-- BOSS + REVIEW BUTTON -->
+    <!-- BOSS + REVIEW (TRAILER FEEL) -->
     <section id="boss-card" class="card">
       <div class="section-title-row">
         <h2>WEEKLY BOSS</h2>
@@ -136,7 +149,7 @@
 
   </main>
 
-  <!-- DAY MODAL (FULL SCREEN MOBILE PANEL) -->
+  <!-- DAY MODAL (BOTTOM SHEET, OTTELU-KORTTI) -->
   <div id="modal-backdrop">
     <div id="day-modal">
       <div class="modal-header">
@@ -198,7 +211,7 @@
     </div>
   </div>
 
-  <!-- REVIEW MODAL -->
+  <!-- REVIEW MODAL (HIGHLIGHT REEL) -->
   <div id="review-backdrop">
     <div id="review-modal">
       <div class="modal-header">
