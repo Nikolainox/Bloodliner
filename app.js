@@ -1,0 +1,639 @@
+/* ------------------------------------------------------
+   BLOODLINER 90 — HABITS + BEHAVIOR ECONOMY
+------------------------------------------------------ */
+
+let data = JSON.parse(localStorage.getItem("bloodlinerDataV2")) || {
+  habits: [],
+  days: {},
+  xp: 0,
+  level: 1,
+  streak: 0,
+  lastCompleted: null,
+  globalShots: 0,
+  currentBoss: null
+};
+
+function save() {
+  localStorage.setItem("bloodlinerDataV2", JSON.stringify(data));
+}
+
+/* INIT DAYS + BACKFILL */
+for (let i = 1; i <= 90; i++) {
+  if (!data.days[i]) {
+    data.days[i] = {
+      habits: {},
+      goal: null,
+      goalResult: null,
+      mood: null,
+      focus: null,
+      energy: [],
+      shots: 0,
+      score: null,
+      pr: null,
+      behaviorValue: 0,
+      status: "open"
+    };
+  } else {
+    const d = data.days[i];
+    if (!d.habits) d.habits = {};
+    if (!d.energy) d.energy = [];
+    if (d.shots === undefined) d.shots = 0;
+    if (d.score === undefined) d.score = null;
+    if (d.pr === undefined) d.pr = null;
+    if (d.behaviorValue === undefined) d.behaviorValue = 0;
+    if (!d.status) d.status = "open";
+  }
+}
+save();
+
+/* ELEMENTS */
+const dayGrid = document.getElementById("day-grid");
+const modalBackdrop = document.getElementById("modal-backdrop");
+const modalTitle = document.getElementById("modal-title");
+const modalHabits = document.getElementById("modal-habits");
+const modalStatus = document.getElementById("modal-status");
+const modalScore = document.getElementById("modal-score");
+const modalPR = document.getElementById("modal-pr");
+const modalGoalResult = document.getElementById("modal-goal-result");
+const modalBehaviorValue = document.getElementById("modal-behavior-value");
+
+const moodInput = document.getElementById("mood-input");
+const focusInput = document.getElementById("focus-input");
+const goalTargetInput = document.getElementById("goal-target-input");
+
+const btnFinalize = document.getElementById("btn-finalize");
+const btnCloseModal = document.getElementById("btn-close-modal");
+
+const modalDayShots = document.getElementById("modal-day-shots");
+const btnDayShot = document.getElementById("btn-day-shot");
+const btnGlobalShot = document.getElementById("btn-global-shot");
+
+const energyButtons = document.querySelectorAll(".energy-btn");
+
+const addHabitForm = document.getElementById("add-habit-form");
+const habitInput = document.getElementById("habit-input");
+const habitsList = document.getElementById("habits-list");
+const habitCount = document.getElementById("habit-count");
+
+const reviewBackdrop = document.getElementById("review-backdrop");
+const btnOpenReview = document.getElementById("open-review");
+const btnCloseReview = document.getElementById("btn-close-review");
+
+/* HUD */
+const hudAvg = document.getElementById("hud-avg");
+const hudPR = document.getElementById("hud-pr");
+const hudXP = document.getElementById("hud-xp");
+const hudLevel = document.getElementById("hud-level");
+const hudStreak = document.getElementById("hud-streak");
+const hudHabits = document.getElementById("hud-habits");
+const hudShots = document.getElementById("hud-shots");
+
+/* PLAYER CARD */
+const pcLevel = document.getElementById("pc-level");
+const pcXP = document.getElementById("pc-xp");
+const pcDays = document.getElementById("pc-days");
+const pcAverage = document.getElementById("pc-average");
+const pcLastScore = document.getElementById("pc-last-score");
+const pcMoodFocus = document.getElementById("pc-mood-focus");
+const pcEnergy = document.getElementById("pc-energy");
+const pcBehaviorAvg = document.getElementById("pc-behavior-avg");
+const pcGoalAccuracy = document.getElementById("pc-goal-accuracy");
+const pcGoalAmbition = document.getElementById("pc-goal-ambition");
+const pcGoalRealism = document.getElementById("pc-goal-realism");
+const pcBoss = document.getElementById("pc-boss");
+
+/* BOSS */
+const bossName = document.getElementById("boss-name");
+const bossWeakness = document.getElementById("boss-weakness");
+const bossGoal = document.getElementById("boss-goal");
+const bossReward = document.getElementById("boss-reward");
+
+let activeDay = null;
+
+/* HABITS */
+function renderHabits() {
+  habitsList.innerHTML = "";
+  data.habits.forEach(h => {
+    const div = document.createElement("div");
+    div.className = "habit-pill";
+    div.innerHTML = `
+      <span>${h}</span>
+      <button data-habit="${h}">&times;</button>
+    `;
+    habitsList.appendChild(div);
+  });
+  habitCount.textContent = `${data.habits.length} habits`;
+  save();
+}
+
+habitsList.addEventListener("click", e => {
+  if (e.target.tagName === "BUTTON") {
+    const h = e.target.dataset.habit;
+    data.habits = data.habits.filter(x => x !== h);
+    for (let i = 1; i <= 90; i++) {
+      delete data.days[i].habits[h];
+    }
+    renderHabits();
+    renderArena();
+    updateHUD();
+    updatePlayerCard();
+    save();
+  }
+});
+
+addHabitForm.addEventListener("submit", e => {
+  e.preventDefault();
+  const h = habitInput.value.trim();
+  if (!h) return;
+  if (!data.habits.includes(h)) data.habits.push(h);
+  habitInput.value = "";
+  renderHabits();
+  renderArena();
+  updateHUD();
+  updatePlayerCard();
+  save();
+});
+
+/* ARENA */
+function renderArena() {
+  dayGrid.innerHTML = "";
+  for (let i = 1; i <= 90; i++) {
+    const d = data.days[i];
+    const tile = document.createElement("div");
+    tile.className = "day";
+    tile.innerHTML = `
+      <div class="day-inner ${d.status === "done" ? "flipped" : ""}" data-day="${i}">
+        <div class="day-front">${i}</div>
+        <div class="day-back">${d.score ?? ""}</div>
+      </div>
+    `;
+    dayGrid.appendChild(tile);
+  }
+}
+
+dayGrid.addEventListener("click", e => {
+  const inner = e.target.closest(".day-inner");
+  if (!inner) return;
+  activeDay = parseInt(inner.dataset.day, 10);
+  openDayModal(activeDay);
+});
+
+/* OPEN DAY MODAL */
+function openDayModal(n) {
+  const d = data.days[n];
+  modalTitle.textContent = `DAY ${n}`;
+  modalStatus.textContent = d.status;
+  modalScore.textContent = d.score ?? "—";
+  modalPR.textContent = d.pr ?? "—";
+  modalBehaviorValue.textContent = d.behaviorValue ?? 0;
+
+  modalGoalResult.textContent = d.goalResult ?? "—";
+  modalGoalResult.className = "goal-tag";
+  if (d.goalResult === "PASS") modalGoalResult.classList.add("goal-pass");
+  if (d.goalResult === "OVERDRIVE") modalGoalResult.classList.add("goal-overdrive");
+  if (d.goalResult === "FAIL") modalGoalResult.classList.add("goal-fail");
+  if (d.goalResult === "NEAR MISS") modalGoalResult.classList.add("goal-near-miss");
+
+  modalHabits.innerHTML = "";
+  data.habits.forEach(h => {
+    const lbl = document.createElement("label");
+    const checked = d.habits[h] === 1 ? "checked" : "";
+    lbl.innerHTML = `
+      <input type="checkbox" data-habit="${h}" ${checked}>
+      ${h}
+    `;
+    modalHabits.appendChild(lbl);
+  });
+
+  goalTargetInput.value = d.goal ?? "";
+  moodInput.value = d.mood ?? "";
+  focusInput.value = d.focus ?? "";
+  modalDayShots.textContent = d.shots;
+
+  modalBackdrop.style.display = "flex";
+}
+
+btnCloseModal.addEventListener("click", () => {
+  modalBackdrop.style.display = "none";
+});
+
+modalHabits.addEventListener("change", e => {
+  if (e.target.type === "checkbox") {
+    const h = e.target.dataset.habit;
+    data.days[activeDay].habits[h] = e.target.checked ? 1 : 0;
+    save();
+  }
+});
+
+/* GOAL SET */
+document.getElementById("btn-set-goal").addEventListener("click", () => {
+  const v = parseInt(goalTargetInput.value);
+  if (!v || v < 1 || v > 100) return;
+  data.days[activeDay].goal = v;
+  save();
+});
+
+/* ENERGY EVENTS */
+energyButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const d = data.days[activeDay];
+    d.energy.push({
+      type: btn.dataset.type,
+      time: Date.now()
+    });
+    btn.classList.add("flash");
+    setTimeout(() => btn.classList.remove("flash"), 200);
+    d.behaviorValue = computeBehaviorValue(d);
+    if (activeDay) modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+    save();
+  });
+});
+
+/* SHOTS */
+btnDayShot.addEventListener("click", () => {
+  const d = data.days[activeDay];
+  d.shots++;
+  modalDayShots.textContent = d.shots;
+  d.behaviorValue = computeBehaviorValue(d);
+  modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+  save();
+});
+
+btnGlobalShot.addEventListener("click", () => {
+  data.globalShots++;
+  hudShots.textContent = data.globalShots;
+  save();
+});
+
+/* BEHAVIOR VALUE FUNCTION */
+function computeBehaviorValue(d) {
+  let value = 0;
+  (d.energy || []).forEach(ev => {
+    if (ev.type === "Water") value += 0.5;
+    if (ev.type === "Move") value += 1;
+    if (ev.type === "Protein") value += 2;
+    if (ev.type === "Coffee") value -= 1.5;
+    if (ev.type === "Meal") value -= 9;
+    if (ev.type === "Nicotine") value -= 0.5;
+  });
+  value -= (d.shots || 0) * 20;
+  return Math.round(value * 10) / 10;
+}
+
+/* FINALIZE DAY */
+btnFinalize.addEventListener("click", () => {
+  finalizeDay(activeDay);
+  modalBackdrop.style.display = "none";
+  renderArena();
+  updateHUD();
+  updatePlayerCard();
+  updateBoss();
+});
+
+function finalizeDay(n) {
+  const d = data.days[n];
+  if (d.status === "done") return;
+
+  d.mood = parseInt(moodInput.value) || 0;
+  d.focus = parseInt(focusInput.value) || 0;
+
+  const habitCount = Object.values(d.habits).filter(x => x === 1).length;
+  d.score = Math.round((habitCount / (data.habits.length || 1)) * 100);
+
+  // goal result
+  if (!d.goal) d.goalResult = "NO GOAL";
+  else if (d.score >= d.goal * 1.15) d.goalResult = "OVERDRIVE";
+  else if (d.score >= d.goal) d.goalResult = "PASS";
+  else if (d.score >= d.goal * 0.8) d.goalResult = "NEAR MISS";
+  else d.goalResult = "FAIL";
+
+  // PR
+  const prevScores = [];
+  for (let i = 1; i < n; i++) {
+    if (data.days[i].score !== null) prevScores.push(data.days[i].score);
+  }
+  const avgPrev = prevScores.length
+    ? prevScores.reduce((a,b)=>a+b)/prevScores.length
+    : 0;
+  d.pr = prevScores.length ? Math.round(d.score - avgPrev) : 0;
+
+  // behavior value
+  d.behaviorValue = computeBehaviorValue(d);
+
+  // XP
+  const xpGain = d.score + (d.goalResult === "OVERDRIVE" ? 20 : 0) + d.pr;
+  data.xp += Math.max(0, xpGain);
+
+  while (data.xp >= data.level * 120) {
+    data.xp -= data.level * 120;
+    data.level++;
+  }
+
+  if (data.lastCompleted === n - 1) data.streak++;
+  else data.streak = 1;
+  data.lastCompleted = n;
+
+  d.status = "done";
+  save();
+}
+
+/* PREDICT ENERGY (avg mood/focus) */
+function predictEnergy() {
+  const moods = [];
+  const focs = [];
+  for (let i = 1; i <= 90; i++) {
+    const d = data.days[i];
+    if (d.mood && d.focus) {
+      moods.push(d.mood);
+      focs.push(d.focus);
+    }
+  }
+  if (!moods.length) return "—";
+  const mAvg = moods.reduce((a,b)=>a+b)/moods.length;
+  const fAvg = focs.reduce((a,b)=>a+b)/focs.length;
+  return Math.round((mAvg + fAvg) / 2);
+}
+
+/* HUD */
+function updateHUD() {
+  const scores = [];
+  const prs = [];
+  for (let i = 1; i <= 90; i++) {
+    const d = data.days[i];
+    if (d.score !== null) scores.push(d.score);
+    if (d.pr !== null) prs.push(d.pr);
+  }
+  const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b)/scores.length) : "—";
+  const prAvg = prs.length ? Math.round(prs.reduce((a,b)=>a+b)/prs.length) : "—";
+
+  hudAvg.textContent = avg;
+  hudPR.textContent = prAvg;
+  hudXP.textContent = data.xp;
+  hudLevel.textContent = data.level;
+  hudStreak.textContent = data.streak;
+  hudHabits.textContent = data.habits.length;
+  hudShots.textContent = data.globalShots;
+}
+
+/* PLAYER CARD */
+function updatePlayerCard() {
+  const scores = [];
+  let lastScore = "—";
+  let totalDays = 0;
+  const behaviors = [];
+  const moods = [];
+  const focs = [];
+
+  for (let i = 1; i <= 90; i++) {
+    const d = data.days[i];
+    if (d.score !== null) {
+      scores.push(d.score);
+      totalDays++;
+      lastScore = d.score;
+    }
+    if (typeof d.behaviorValue === "number") behaviors.push(d.behaviorValue);
+    if (d.mood) moods.push(d.mood);
+    if (d.focus) focs.push(d.focus);
+  }
+
+  const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b)/scores.length) : "—";
+  const bAvg = behaviors.length
+    ? Math.round((behaviors.reduce((a,b)=>a+b)/behaviors.length)*10)/10
+    : "—";
+
+  pcLevel.textContent = data.level;
+  pcXP.textContent = data.xp;
+  pcDays.textContent = totalDays;
+  pcAverage.textContent = avg;
+  pcLastScore.textContent = lastScore;
+  pcBehaviorAvg.textContent = bAvg;
+
+  const mAvg = moods.length ? Math.round(moods.reduce((a,b)=>a+b)/moods.length) : "—";
+  const fAvg = focs.length ? Math.round(focs.reduce((a,b)=>a+b)/focs.length) : "—";
+  pcMoodFocus.textContent = `${mAvg}/${fAvg}`;
+  pcEnergy.textContent = predictEnergy();
+
+  const gRes = { PASS:0, OVERDRIVE:0, FAIL:0, "NEAR MISS":0 };
+  let gSet = 0;
+  for (let i = 1; i <= 90; i++) {
+    const r = data.days[i].goalResult;
+    if (!r || r === "NO GOAL") continue;
+    gRes[r] = (gRes[r] || 0) + 1;
+    gSet++;
+  }
+  pcGoalAccuracy.textContent =
+    gSet ? Math.round((gRes.PASS+gRes.OVERDRIVE)/gSet*100)+"%" : "0%";
+  pcGoalAmbition.textContent =
+    gSet ? Math.round(gRes.OVERDRIVE/gSet*100)+"%" : "0%";
+  pcGoalRealism.textContent =
+    gSet ? Math.round((gRes.PASS+gRes["NEAR MISS"])/gSet*100)+"%" : "0%";
+
+  pcBoss.textContent = data.currentBoss ?? "—";
+}
+
+/* BOSS SYSTEM */
+function updateBoss() {
+  if (data.lastCompleted == null) {
+    data.currentBoss = "Kerää dataa…";
+    bossName.textContent = data.currentBoss;
+    bossWeakness.textContent = "";
+    bossGoal.textContent = "";
+    bossReward.textContent = "";
+    return;
+  }
+
+  const moods = [], focs = [], shots = [], scores = [];
+  for (let i = 1; i <= data.lastCompleted; i++) {
+    const d = data.days[i];
+    if (d.mood) moods.push(d.mood);
+    if (d.focus) focs.push(d.focus);
+    if (d.shots) shots.push(d.shots);
+    if (d.score !== null) scores.push(d.score);
+  }
+  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b)/arr.length : 0;
+  const avgMood = avg(moods);
+  const avgFocus = avg(focs);
+  const avgShots = avg(shots);
+  const avgScore = avg(scores);
+
+  let boss = "Momentum Reaper";
+  if (avgShots > 4) boss = "Distraction Kraken";
+  else if (avgMood < 4) boss = "Mood Serpent";
+  else if (avgFocus < 4) boss = "Procrastination Specter";
+  else if (avgScore > 80) boss = "Glass Cannon Mirror";
+  else if (avgScore < 50) boss = "Binary Trap Serpent";
+  else boss = "Supernova Warden";
+
+  data.currentBoss = boss;
+  bossName.textContent = boss;
+
+  if (boss === "Distraction Kraken") {
+    bossWeakness.textContent = "Weakness: Shot discipline";
+    bossGoal.textContent = "Goal: Max 3 shots/day";
+    bossReward.textContent = "Reward: +30 XP";
+  } else if (boss === "Mood Serpent") {
+    bossWeakness.textContent = "Weakness: Mood rituals";
+    bossGoal.textContent = "Goal: Mood ≥6 three days";
+    bossReward.textContent = "Reward: +40 XP";
+  } else if (boss === "Procrastination Specter") {
+    bossWeakness.textContent = "Weakness: Focus blocks";
+    bossGoal.textContent = "Goal: Focus ≥6 three days";
+    bossReward.textContent = "Reward: +40 XP";
+  } else if (boss === "Glass Cannon Mirror") {
+    bossWeakness.textContent = "Weakness: Consistency";
+    bossGoal.textContent = "Goal: Five days score ≥75";
+    bossReward.textContent = "Reward: +50 XP";
+  } else if (boss === "Binary Trap Serpent") {
+    bossWeakness.textContent = "Weakness: Minimum wins";
+    bossGoal.textContent = "Goal: Score 60+ four days";
+    bossReward.textContent = "Reward: +30 XP";
+  } else if (boss === "Supernova Warden") {
+    bossWeakness.textContent = "Weakness: Overdrive pushes";
+    bossGoal.textContent = "Goal: 1 Overdrive this week";
+    bossReward.textContent = "Reward: +60 XP";
+  }
+  save();
+}
+
+/* REVIEW MODAL */
+btnOpenReview.addEventListener("click", () => {
+  renderReview();
+  reviewBackdrop.style.display = "flex";
+});
+
+btnCloseReview.addEventListener("click", () => {
+  reviewBackdrop.style.display = "none";
+});
+
+function renderReview() {
+  const scores = [];
+  const mood = [];
+  const focus = [];
+  const behavior = [];
+
+  for (let i = 1; i <= 90; i++) {
+    const d = data.days[i];
+    scores.push(d.score ?? 0);
+    mood.push(d.mood ?? 0);
+    focus.push(d.focus ?? 0);
+    behavior.push(d.behaviorValue ?? 0);
+  }
+
+  new Chart(document.getElementById("chart-score"), {
+    type: "line",
+    data: {
+      labels: [...Array(90).keys()].map(x => x + 1),
+      datasets: [{
+        label: "Score",
+        data: scores,
+        borderWidth: 2,
+        tension: 0.3
+      }]
+    }
+  });
+
+  new Chart(document.getElementById("chart-moodfocus"), {
+    type: "line",
+    data: {
+      labels: [...Array(90).keys()].map(x => x + 1),
+      datasets: [
+        { label: "Mood", data: mood, borderWidth: 2 },
+        { label: "Focus", data: focus, borderWidth: 2 }
+      ]
+    }
+  });
+
+  new Chart(document.getElementById("chart-behavior"), {
+    type: "line",
+    data: {
+      labels: [...Array(90).keys()].map(x => x + 1),
+      datasets: [{
+        label: "Behavior Value",
+        data: behavior,
+        borderWidth: 2,
+        tension: 0.3
+      }]
+    }
+  });
+
+  renderInsights();
+}
+
+/* INSIGHTS */
+function renderInsights() {
+  const ul = document.getElementById("insights-list");
+  ul.innerHTML = "";
+
+  let best = { score: -1, day: null };
+  let worst = { score: 999, day: null };
+
+  let energyTotals = {
+    Water: 0,
+    Move: 0,
+    Protein: 0,
+    Coffee: 0,
+    Meal: 0,
+    Nicotine: 0
+  };
+  let totalShots = 0;
+
+  for (let i = 1; i <= 90; i++) {
+    const d = data.days[i];
+    if (d.score !== null) {
+      if (d.score > best.score) { best.score = d.score; best.day = i; }
+      if (d.score < worst.score) { worst.score = d.score; worst.day = i; }
+    }
+    (d.energy || []).forEach(ev => {
+      if (energyTotals[ev.type] !== undefined) {
+        energyTotals[ev.type]++;
+      }
+    });
+    totalShots += d.shots || 0;
+  }
+
+  if (best.day !== null) {
+    const li1 = document.createElement("li");
+    li1.textContent = `Paras päivä: Day ${best.day} (${best.score}%)`;
+    ul.appendChild(li1);
+  }
+  if (worst.day !== null) {
+    const li2 = document.createElement("li");
+    li2.textContent = `Heikoin päivä: Day ${worst.day} (${worst.score}%)`;
+    ul.appendChild(li2);
+  }
+
+  const moodList = [], focusList = [];
+  for (let i = 1; i <= 90; i++) {
+    if (data.days[i].mood) moodList.push(data.days[i].mood);
+    if (data.days[i].focus) focusList.push(data.days[i].focus);
+  }
+  if (moodList.length) {
+    const li3 = document.createElement("li");
+    li3.textContent =
+      `Keskimääräinen mood: ${Math.round(moodList.reduce((a,b)=>a+b)/moodList.length)}`;
+    ul.appendChild(li3);
+  }
+  if (focusList.length) {
+    const li4 = document.createElement("li");
+    li4.textContent =
+      `Keskimääräinen focus: ${Math.round(focusList.reduce((a,b)=>a+b)/focusList.length)}`;
+    ul.appendChild(li4);
+  }
+
+  Object.entries(energyTotals).forEach(([type, count]) => {
+    const li = document.createElement("li");
+    li.textContent = `${type} painalluksia: ${count}`;
+    ul.appendChild(li);
+  });
+
+  const liShots = document.createElement("li");
+  liShots.textContent = `Shots yhteensä: ${totalShots}`;
+  ul.appendChild(liShots);
+}
+
+/* INIT */
+renderHabits();
+renderArena();
+updateHUD();
+updatePlayerCard();
+updateBoss();
