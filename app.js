@@ -1,5 +1,5 @@
 /* ------------------------------------------------------
-   BLOODLINER 90 — Netflix + ESPN Edition + Energy Breakdown
+   BLOODLINER 90 — Netflix + ESPN Edition + Move Mode Picker
 ------------------------------------------------------ */
 
 let data = JSON.parse(localStorage.getItem("bloodlinerDataV4")) || {
@@ -104,7 +104,7 @@ const pcEnergy = document.getElementById("pc-energy");
 const pcBehaviorAvg = document.getElementById("pc-behavior-avg");
 const pcMoodFocus = document.getElementById("pc-mood-focus");
 
-/* Optional goal metrics / boss id (not näkyvissä, joten null-check) */
+/* Optional (not in DOM but safe) */
 const pcGoalAccuracy = document.getElementById("pc-goal-accuracy");
 const pcGoalAmbition = document.getElementById("pc-goal-ambition");
 const pcGoalRealism = document.getElementById("pc-goal-realism");
@@ -118,6 +118,11 @@ const bossReward = document.getElementById("boss-reward");
 
 /* TICKER */
 const tickerText = document.getElementById("ticker-text");
+
+/* MOVE MODE PICKER */
+const moveModeBackdrop = document.getElementById("move-mode-backdrop");
+const moveModeButtons = document.querySelectorAll(".move-mode-btn");
+const moveModeCancel = document.getElementById("move-mode-cancel");
 
 let activeDay = 1;
 
@@ -263,11 +268,19 @@ function computeBehaviorValue(d) {
   let value = 0;
   (d.energy || []).forEach(ev => {
     if (ev.type === "Water") value += 0.5;
-    if (ev.type === "Move") value += 1;
     if (ev.type === "Protein") value += 2;
     if (ev.type === "Coffee") value -= 1.5;
     if (ev.type === "Meal") value -= 9;
     if (ev.type === "Nicotine") value -= 0.5;
+    if (ev.type === "Move") {
+      const mode = ev.mode || "Walk";
+      if (mode === "Walk") value += 1;
+      else if (mode === "Run") value += 2;
+      else if (mode === "Gym") value += 4;
+      else if (mode === "Sport") value += 5;
+      else if (mode === "Mobility") value += 1.5;
+      else value += 1;
+    }
   });
   value -= (d.shots || 0) * 20;
   return Math.round(value * 10) / 10;
@@ -284,8 +297,20 @@ function renderEnergyBreakdown(d) {
     Meal: 0,
     Nicotine: 0
   };
+  const moveModes = {
+    Walk: 0,
+    Run: 0,
+    Gym: 0,
+    Sport: 0,
+    Mobility: 0
+  };
+
   (d.energy || []).forEach(ev => {
     if (counts[ev.type] !== undefined) counts[ev.type]++;
+    if (ev.type === "Move") {
+      const m = ev.mode || "Walk";
+      if (moveModes[m] !== undefined) moveModes[m]++;
+    }
   });
   const shots = d.shots || 0;
 
@@ -299,23 +324,77 @@ function renderEnergyBreakdown(d) {
   };
 
   energyBreakdown.innerHTML = "";
+
   Object.entries(counts).forEach(([type, count]) => {
     if (!count) return;
-    const li = document.createElement("li");
-    li.textContent = `${emojis[type]} ${type}: ${count}`;
-    energyBreakdown.appendChild(li);
+    if (type === "Move") {
+      const total = count;
+      const parts = [];
+      Object.entries(moveModes).forEach(([mode, c]) => {
+        if (c) parts.push(`${mode}:${c}`);
+      });
+      const li = document.createElement("li");
+      li.textContent = `${emojis.Move} Move: ${total}` + (parts.length ? ` (${parts.join(", ")})` : "");
+      energyBreakdown.appendChild(li);
+    } else {
+      const li = document.createElement("li");
+      li.textContent = `${emojis[type]} ${type}: ${count}`;
+      energyBreakdown.appendChild(li);
+    }
   });
+
   const liShots = document.createElement("li");
   liShots.textContent = `💣 Shots: ${shots}`;
   energyBreakdown.appendChild(liShots);
 }
 
+/* MOVE MODE PICKER */
+function openMoveModePicker() {
+  moveModeBackdrop.style.display = "flex";
+}
+function closeMoveModePicker() {
+  moveModeBackdrop.style.display = "none";
+}
+
+moveModeBackdrop.addEventListener("click", e => {
+  if (e.target === moveModeBackdrop) closeMoveModePicker();
+});
+moveModeCancel.addEventListener("click", () => {
+  closeMoveModePicker();
+});
+
+moveModeButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const mode = btn.dataset.mode;
+    const d = data.days[activeDay];
+    d.energy.push({
+      type: "Move",
+      mode,
+      time: Date.now()
+    });
+    d.behaviorValue = computeBehaviorValue(d);
+    if (modalBackdrop.style.display === "flex") {
+      modalBehaviorValue.textContent = d.behaviorValue.toFixed(1);
+      renderEnergyBreakdown(d);
+    }
+    updateQuickCard();
+    updateTicker();
+    save();
+    closeMoveModePicker();
+  });
+});
+
 /* ENERGY EVENTS IN MODAL */
 energyButtons.forEach(btn => {
   btn.addEventListener("click", () => {
+    const t = btn.dataset.type;
     const d = data.days[activeDay];
+    if (t === "Move") {
+      openMoveModePicker();
+      return;
+    }
     d.energy.push({
-      type: btn.dataset.type,
+      type: t,
       time: Date.now()
     });
     btn.classList.add("flash");
@@ -335,6 +414,10 @@ qaButtons.forEach(btn => {
   if (!t) return;
   btn.addEventListener("click", () => {
     const d = data.days[activeDay];
+    if (t === "Move") {
+      openMoveModePicker();
+      return;
+    }
     d.energy.push({
       type: t,
       time: Date.now()
@@ -629,6 +712,12 @@ btnCloseReview.addEventListener("click", () => {
   reviewBackdrop.style.display = "none";
 });
 
+let charts = {
+  score: null,
+  moodfocus: null,
+  behavior: null
+};
+
 function renderReview() {
   const scores = [];
   const mood = [];
@@ -643,7 +732,11 @@ function renderReview() {
     behavior.push(d.behaviorValue ?? 0);
   }
 
-  new Chart(document.getElementById("chart-score"), {
+  if (charts.score) charts.score.destroy();
+  if (charts.moodfocus) charts.moodfocus.destroy();
+  if (charts.behavior) charts.behavior.destroy();
+
+  charts.score = new Chart(document.getElementById("chart-score"), {
     type: "line",
     data: {
       labels: [...Array(90).keys()].map(x => x + 1),
@@ -656,7 +749,7 @@ function renderReview() {
     }
   });
 
-  new Chart(document.getElementById("chart-moodfocus"), {
+  charts.moodfocus = new Chart(document.getElementById("chart-moodfocus"), {
     type: "line",
     data: {
       labels: [...Array(90).keys()].map(x => x + 1),
@@ -667,7 +760,7 @@ function renderReview() {
     }
   });
 
-  new Chart(document.getElementById("chart-behavior"), {
+  charts.behavior = new Chart(document.getElementById("chart-behavior"), {
     type: "line",
     data: {
       labels: [...Array(90).keys()].map(x => x + 1),
