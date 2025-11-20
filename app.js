@@ -1,5 +1,5 @@
 /* ------------------------------------------------------
-   BLOODLINER 90 — Netflix + ESPN Edition + Move Mode Picker
+   BLOODLINER 90 — Netflix + ESPN Edition + Move Mode Picker + Reset
 ------------------------------------------------------ */
 
 let data = JSON.parse(localStorage.getItem("bloodlinerDataV4")) || {
@@ -68,6 +68,9 @@ const modalDayShots = document.getElementById("modal-day-shots");
 const btnDayShot = document.getElementById("btn-day-shot");
 const btnGlobalShot = document.getElementById("btn-global-shot");
 
+/* RESET */
+const btnReset = document.getElementById("btn-reset");
+
 const energyButtons = document.querySelectorAll(".energy-btn");
 const energyBreakdown = document.getElementById("energy-breakdown");
 
@@ -125,6 +128,16 @@ const moveModeButtons = document.querySelectorAll(".move-mode-btn");
 const moveModeCancel = document.getElementById("move-mode-cancel");
 
 let activeDay = 1;
+
+/* RESET HANDLER */
+if (btnReset) {
+  btnReset.addEventListener("click", () => {
+    const ok = confirm("Reset Bloodliner 90? Kaikki 90 päivän data poistetaan.");
+    if (!ok) return;
+    localStorage.removeItem("bloodlinerDataV4");
+    location.reload();
+  });
+}
 
 /* HABITS */
 function renderHabits() {
