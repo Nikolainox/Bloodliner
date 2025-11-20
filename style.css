@@ -248,7 +248,7 @@ body {
   border-radius: 999px;
 }
 .qa-btn {
-  flex: 0 0 44px;
+  flex: 0 0 48px;
   padding: 9px 0;
   border-radius: 12px;
   border: 1px solid var(--border);
@@ -265,6 +265,10 @@ body {
 }
 .qa-btn:active {
   transform: translateY(1px) scale(0.97);
+}
+.qa-btn.flash {
+  background: var(--accent-green);
+  color: #020617;
 }
 .qa-label {
   margin-top: 6px;
@@ -651,6 +655,56 @@ body {
   margin-bottom: 4px;
 }
 
+/* MOVE MODE PICKER */
+#move-mode-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3,7,18,0.92);
+  display: none;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 10px;
+  z-index: 70;
+}
+#move-mode-sheet {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 16px 16px 0 0;
+  background: radial-gradient(circle at top, #020617, #020617);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -18px 40px rgba(0,0,0,0.9);
+  padding: 10px 12px 12px;
+}
+#move-mode-sheet h3 {
+  margin: 0;
+  font-size: 13px;
+}
+.move-hint {
+  margin: 2px 0 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.move-mode-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.move-mode-btn {
+  flex: 1 1 calc(50% - 6px);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #020617;
+  color: var(--text-main);
+  font-size: 13px;
+  padding: 8px 10px;
+  text-align: center;
+  cursor: pointer;
+}
+.move-mode-btn:active {
+  transform: translateY(1px) scale(0.97);
+}
+
 /* SCROLL HELPERS */
 #habits-body {
   margin-top: 4px;
@@ -663,4 +717,3 @@ body {
     gap: 6px;
   }
 }
-
