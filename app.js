@@ -1,7 +1,10 @@
 /* ------------------------------------------------------
-   BLOODLINER 90 • Project 1
+   BLOODLINER 90 • Project 1 (B + ESPN TICKER)
    - 90-day habit + energy + economy scoreboard
-   - A+ Prime Wake: yksi nappi, kaikki logiikka taustalla
+   - A+ Prime Wake: yksi nappi, logiikka taustalla
+   - Habits näkyvät päiväkortilla (✓) + modalissa
+   - Bayes-tyylinen huomisen energian ennuste
+   - ESPN-tyylinen ticker, joka päivittyy datasta
    - LocalStorage only
 ------------------------------------------------------ */
 
@@ -167,6 +170,9 @@ const btnReset = document.getElementById("btn-reset");
 
 const dayGrid = document.getElementById("day-grid");
 
+// Ticker
+const tickerInner = document.getElementById("ticker-inner");
+
 // Wake
 const btnWakeNow = document.getElementById("btn-wake-now");
 const wakeTimeLabel = document.getElementById("wake-time-label");
@@ -249,6 +255,12 @@ function renderGrid() {
     cell.classList.add(cls);
     if (i === data.currentDay) cell.classList.add("current");
     if (day.pr) cell.classList.add("pr");
+
+    // Habits marker (for cell class)
+    const hasHabitsDone = Object.values(day.habitsDone || {}).some(Boolean);
+    if (hasHabitsDone) {
+      cell.classList.add("day-habits-done");
+    }
 
     cell.innerHTML = `<span>${i}</span>`;
     cell.addEventListener("click", () => handleDayClick(i));
@@ -341,6 +353,55 @@ function renderHabitList() {
   });
 }
 
+/* ESPN TICKER */
+
+function updateTicker() {
+  let segments = [];
+
+  for (let i = 1; i <= 90; i++) {
+    const day = data.days[i];
+    if (!day) continue;
+    const score = day.totalScore || 0;
+    const money = day.moneySpent || 0;
+    const tomorrow = day.tomorrowEnergy;
+    const wake = formatTimeFromMinutes(day.wakeTimeMinutes);
+
+    // Näytetään vain päivät, joissa on jotain (score tai wake tai energy)
+    const hasAny =
+      score !== 0 ||
+      day.wakeTimeMinutes != null ||
+      Object.values(day.energy || {}).some((v) => v > 0) ||
+      Object.values(day.habitsDone || {}).some(Boolean);
+
+    if (!hasAny) continue;
+
+    let label = `DAY ${i} • SCORE ${score} • WAKE ${wake} • €${money.toFixed(
+      2
+    )}`;
+    if (tomorrow != null) {
+      label += ` • TOMORROW ${tomorrow}`;
+    }
+    if (day.pr) {
+      label += " • PR🔥";
+    }
+    segments.push(label);
+  }
+
+  if (segments.length === 0) {
+    tickerInner.textContent = "BLOODLINER 90 • NO DATA YET • START DAY 1 TODAY";
+  } else {
+    const text = "  |  " + segments.join("  |  ") + "  |  ";
+    tickerInner.textContent = text;
+  }
+
+  // Reset animation (jos sisältö muuttuu, restart)
+  tickerInner.style.animation = "none";
+  // force reflow
+  void tickerInner.offsetWidth;
+  tickerInner.style.animation = "";
+  tickerInner.style.animation = "ticker-scroll 30s linear infinite";
+}
+
 /* EVENTS */
 
 // Reset
@@ -395,6 +456,7 @@ habitAddBtn.addEventListener("click", () => {
   habitInput.value = "";
   save();
   renderHabitList();
+  updateTicker();
 });
 
 // Finalize day
@@ -525,7 +587,7 @@ function openDayModal(dayNumber) {
 /* UPDATE ALL */
 
 function updateAll() {
-  // Recompute all days to keep consistency (in case habits are removed jne.)
+  // Recompute all days to keep consistency (esim. habit-poistot)
   for (let i = 1; i <= 90; i++) {
     recomputeDay(i);
   }
@@ -533,7 +595,9 @@ function updateAll() {
   renderHUD();
   renderGrid();
   renderCurrentDay();
+  updateTicker();
 }
 
 /* INIT */
 updateAll();
+
