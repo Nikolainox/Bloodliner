@@ -54,8 +54,9 @@
       <div id="day-grid"></div>
     </section>
 
-    <!-- LEFT COLUMN: WAKE + ENERGY -->
-    <section id="left-column">
+    <!-- WAKE + ENERGY + HABITS + SUMMARY yhtenä mobiilikolumnina -->
+    <section id="stack-column">
+
       <!-- WAKE CARD -->
       <section id="wake-card" class="card">
         <h2>PRIME WAKE</h2>
@@ -64,7 +65,7 @@
           Oletus prime-ikkuna: 06:00–08:00.
         </p>
         <div class="wake-row">
-          <button id="btn-wake-now" class="btn primary">Heräsin nyt</button>
+          <button id="btn-wake-now" class="btn primary big">Heräsin nyt</button>
           <div class="wake-info">
             <div><span>Aamun aika:</span> <strong id="wake-time-label">—</strong></div>
             <div><span>Wake Score:</span> <strong id="wake-score-label">0</strong></div>
@@ -127,10 +128,7 @@
           </div>
         </div>
       </section>
-    </section>
 
-    <!-- RIGHT COLUMN: HABITS + SUMMARY -->
-    <section id="right-column">
       <!-- HABITS CARD -->
       <section id="habits-card" class="card">
         <h2>HABITS</h2>
@@ -166,10 +164,11 @@
           </div>
         </div>
 
-        <button id="btn-finalize-day" class="btn primary fullwidth">
+        <button id="btn-finalize-day" class="btn primary fullwidth big">
           Finalize Day • Lukitse ja väritä
         </button>
       </section>
+
     </section>
 
   </main>
