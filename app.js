@@ -1,5 +1,5 @@
 /* ------------------------------------------------------
-   BLOODLINER 90 • Project 1 (B + ESPN TICKER)
+   BLOODLINER 90 • Project 1 (B + ESPN TICKER, mobile-first)
    - 90-day habit + energy + economy scoreboard
    - A+ Prime Wake: yksi nappi, logiikka taustalla
    - Habits näkyvät päiväkortilla (✓) + modalissa
@@ -256,7 +256,7 @@ function renderGrid() {
     if (i === data.currentDay) cell.classList.add("current");
     if (day.pr) cell.classList.add("pr");
 
-    // Habits marker (for cell class)
+    // Habits marker
     const hasHabitsDone = Object.values(day.habitsDone || {}).some(Boolean);
     if (hasHabitsDone) {
       cell.classList.add("day-habits-done");
@@ -366,7 +366,6 @@ function updateTicker() {
     const tomorrow = day.tomorrowEnergy;
     const wake = formatTimeFromMinutes(day.wakeTimeMinutes);
 
-    // Näytetään vain päivät, joissa on jotain (score tai wake tai energy)
     const hasAny =
       score !== 0 ||
       day.wakeTimeMinutes != null ||
@@ -394,9 +393,8 @@ function updateTicker() {
     tickerInner.textContent = text;
   }
 
-  // Reset animation (jos sisältö muuttuu, restart)
+  // Reset animation (jos sisältö muuttuu)
   tickerInner.style.animation = "none";
-  // force reflow
   void tickerInner.offsetWidth;
   tickerInner.style.animation = "";
   tickerInner.style.animation = "ticker-scroll 30s linear infinite";
@@ -467,7 +465,6 @@ btnFinalizeDay.addEventListener("click", () => {
     return;
   }
 
-  // Jos ei mitään, varmistetaan
   if (
     !day.wakeTimeMinutes &&
     day.habitScore === 0 &&
@@ -479,7 +476,6 @@ btnFinalizeDay.addEventListener("click", () => {
     if (!ok) return;
   }
 
-  // PR-tarkistus (score vs aiemmat)
   let best = -Infinity;
   for (let i = 1; i <= 90; i++) {
     if (i === data.currentDay) continue;
@@ -490,7 +486,6 @@ btnFinalizeDay.addEventListener("click", () => {
 
   day.locked = true;
 
-  // Streak
   if (data.lastCompletedDay === data.currentDay - 1) {
     data.streak = (data.streak || 0) + 1;
   } else {
@@ -498,7 +493,6 @@ btnFinalizeDay.addEventListener("click", () => {
   }
   data.lastCompletedDay = data.currentDay;
 
-  // Siirry seuraavaan päivään jos mahdollinen
   if (data.currentDay < 90) {
     data.currentDay++;
   }
@@ -587,7 +581,6 @@ function openDayModal(dayNumber) {
 /* UPDATE ALL */
 
 function updateAll() {
-  // Recompute all days to keep consistency (esim. habit-poistot)
   for (let i = 1; i <= 90; i++) {
     recomputeDay(i);
   }
@@ -600,4 +593,3 @@ function updateAll() {
 
 /* INIT */
 updateAll();
-
