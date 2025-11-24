@@ -91,6 +91,37 @@ body {
   font-size: 13px;
 }
 
+/* ESPN-LIVE TICKER */
+#ticker-bar {
+  position: sticky;
+  top: 48px;
+  z-index: 40;
+  height: 26px;
+  border-top: 1px solid #111827;
+  border-bottom: 1px solid #111827;
+  background: linear-gradient(90deg, #020617, #111827, #020617);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+#ticker-inner {
+  white-space: nowrap;
+  padding-left: 100%;
+  font-size: 11px;
+  color: var(--text-muted);
+  animation: ticker-scroll 30s linear infinite;
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
 /* LAYOUT */
 #layout {
   display: grid;
@@ -168,6 +199,17 @@ body {
 }
 .day-elite::before {
   background: radial-gradient(circle at center, rgba(239, 68, 68, 0.35), #020617);
+}
+
+/* Habit indicator on day card */
+.day-cell.day-habits-done::after {
+  content: "✓";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 10px;
+  color: #22c55e;
+  text-shadow: 0 0 6px rgba(34,197,94,0.8);
 }
 
 .day-cell.current {
@@ -403,5 +445,8 @@ body {
   #hud {
     flex-wrap: wrap;
     gap: 6px;
+  }
+  #ticker-bar {
+    top: auto;
   }
 }
