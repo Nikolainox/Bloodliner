@@ -3,266 +3,191 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Bloodliner 90 • Season 1</title>
+  <title>Bloodliner 90 • Habit & Energy Scoreboard</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-  <!-- HERO + HUD (NETFLIX / ESPN) -->
+  <!-- HUD -->
   <header id="hud">
     <div class="hud-left">
       <div class="hud-logo">
         <span class="bloodliner-b">B</span>
         <div class="hud-logo-text">
           <span class="bloodliner-title">BLOODLINER 90</span>
-          <span class="bloodliner-sub">SEASON 1 • YOUR LIFE IN STATS</span>
-        </div>
-      </div>
-      <div class="hud-gauges">
-        <div class="gauge">
-          <span>AVG</span>
-          <strong id="hud-avg">—</strong>
-        </div>
-        <div class="gauge">
-          <span>PR</span>
-          <strong id="hud-pr">—</strong>
+          <span class="bloodliner-sub">HABITS • ENERGY • ECONOMY</span>
         </div>
       </div>
     </div>
     <div class="hud-right">
       <div class="hud-chip">
-        <span>LVL</span>
-        <strong id="hud-level">1</strong>
+        <span>PÄIVÄ</span>
+        <strong id="hud-day">1 / 90</strong>
       </div>
       <div class="hud-chip">
-        <span>XP</span>
-        <strong id="hud-xp">0</strong>
-      </div>
-      <div class="hud-chip small">
         <span>STREAK</span>
         <strong id="hud-streak">0</strong>
       </div>
+      <div class="hud-chip small">
+        <span>SCORE YHT.</span>
+        <strong id="hud-total-score">0</strong>
+      </div>
+      <button id="btn-reset" class="btn danger tiny">Reset</button>
     </div>
   </header>
-
-  <!-- ESPN TICKER -->
-  <div id="ticker">
-    <div id="ticker-inner">
-      <span id="ticker-label">LIVE</span>
-      <span id="ticker-text">Season ready. No games played yet.</span>
-    </div>
-  </div>
 
   <!-- MAIN LAYOUT -->
   <main id="layout">
 
-    <!-- QUICK SCOREBOARD (ESPN HUD) -->
-    <section id="quick-bar" class="card">
-      <div class="quick-row">
-        <div class="quick-main-stat">
-          <span>BEHAVIOR AVG</span>
-          <strong id="pc-behavior-avg">—</strong>
-        </div>
-        <div class="quick-stat">
-          <span>LAST SCORE</span>
-          <strong id="pc-last-score">—</strong>
-        </div>
-        <div class="quick-stat">
-          <span>ENERGY TOMORROW</span>
-          <strong id="pc-energy">—</strong>
-        </div>
-      </div>
-      <div class="quick-row bottom">
-        <div class="quick-chip">
-          <span>MOOD / FOCUS</span>
-          <strong id="pc-mood-focus">—</strong>
-        </div>
-        <div class="quick-chip">
-          <span>HABITS</span>
-          <strong id="hud-habits">0</strong>
-        </div>
-        <div class="quick-chip">
-          <span>SHOTS</span>
-          <strong id="hud-shots">0</strong>
-        </div>
-      </div>
+    <!-- 90-DAY GRID -->
+    <section id="grid-card" class="card">
+      <h2>90 DAY BOARD</h2>
+      <p class="sub-hint">
+        Klikkaa päivää nähdäksesi statsit. Väri = päivän kokonais Score.
+      </p>
+      <div id="day-grid"></div>
     </section>
 
-    <!-- NETFLIX STYLE: ACTION RAIL -->
-    <section id="quick-actions" class="card">
-      <h2>GAME BAR</h2>
-      <p class="hint">Tap to log – nopea, kevyt, kuin ohjainnäppäin.</p>
-      <div class="qa-row">
-        <button class="qa-btn" data-type="Water">💧</button>
-        <button class="qa-btn" data-type="Move">🏃‍♂️</button>
-        <button class="qa-btn" data-type="Protein">🍫💪</button>
-        <button class="qa-btn" data-type="Coffee">☕</button>
-        <button class="qa-btn" data-type="Meal">🍽️</button>
-        <button class="qa-btn" data-type="Nicotine">🚬❌</button>
-        <button class="qa-btn danger" id="qa-shot">💣</button>
-      </div>
-      <p class="qa-label">Aktiivinen päivä: <span id="qa-active-day">Day 1</span></p>
+    <!-- WAKE + ENERGY PANEL -->
+    <section id="left-column">
+      <!-- WAKE CARD -->
+      <section id="wake-card" class="card">
+        <h2>PRIME WAKE</h2>
+        <p class="sub-hint">
+          A+ versio: yksi napin painallus aamulla. Bloodliner hoitaa loput.
+          Oletus prime-ikkuna: 06:00–08:00.
+        </p>
+        <div class="wake-row">
+          <button id="btn-wake-now" class="btn primary">Heräsin nyt</button>
+          <div class="wake-info">
+            <div><span>Aamun aika:</span> <strong id="wake-time-label">—</strong></div>
+            <div><span>Wake Score:</span> <strong id="wake-score-label">0</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ENERGY CARD -->
+      <section id="energy-card" class="card">
+        <h2>ENERGY & ECONOMY</h2>
+        <p class="sub-hint">
+          Napauta nappia aina kun käytät. Bloodliner laskee energian ja rahan.
+        </p>
+
+        <div id="energy-grid">
+          <button class="energy-btn" data-type="nicotine">
+            <span class="emoji">🚬</span>
+            <span class="label">Nicotine</span>
+            <span class="count" id="cnt-nicotine">0</span>
+          </button>
+          <button class="energy-btn" data-type="coffee">
+            <span class="emoji">☕</span>
+            <span class="label">Coffee</span>
+            <span class="count" id="cnt-coffee">0</span>
+          </button>
+          <button class="energy-btn" data-type="water">
+            <span class="emoji">💧</span>
+            <span class="label">Water</span>
+            <span class="count" id="cnt-water">0</span>
+          </button>
+          <button class="energy-btn" data-type="protein">
+            <span class="emoji">🥫</span>
+            <span class="label">Protein</span>
+            <span class="count" id="cnt-protein">0</span>
+          </button>
+          <button class="energy-btn" data-type="meal">
+            <span class="emoji">🍽️</span>
+            <span class="label">Meal</span>
+            <span class="count" id="cnt-meal">0</span>
+          </button>
+          <button class="energy-btn" data-type="shots">
+            <span class="emoji">🧊</span>
+            <span class="label">Shot / Huono</span>
+            <span class="count" id="cnt-shots">0</span>
+          </button>
+        </div>
+
+        <div id="energy-stats">
+          <div class="qstat">
+            <span>Päivän Energy Score</span>
+            <strong id="energy-score-label">0</strong>
+          </div>
+          <div class="qstat">
+            <span>Rahan käyttö (€)</span>
+            <strong id="money-spent-label">0.00</strong>
+          </div>
+          <div class="qstat">
+            <span>Huomisen energia (pred.)</span>
+            <strong id="tomorrow-energy-label">—</strong>
+          </div>
+        </div>
+      </section>
     </section>
 
-    <!-- NETFLIX STRIP: 90-DAY ARENA -->
-    <section id="arena" class="card arena-card">
-      <div class="arena-header">
-        <h2>90 DAY ARENA</h2>
-        <button id="btn-global-shot" class="btn ghost small">Global 💣</button>
-      </div>
-      <p class="arena-sub">Swipe → selaa päiviä, tap → statsit, finalize flippaa kuin player card.</p>
-      <div class="day-strip-wrapper">
-        <div id="day-grid"></div>
-      </div>
-    </section>
-
-    <!-- HABITS (ADD / DELETE) -->
-    <section id="habits" class="card">
-      <div class="section-title-row">
+    <!-- HABITS + FINALIZE COLUMN -->
+    <section id="right-column">
+      <!-- HABITS CARD -->
+      <section id="habits-card" class="card">
         <h2>HABITS</h2>
-        <button id="toggle-habits" class="btn ghost tiny">Näytä / Piilota</button>
-      </div>
-      <div id="habits-body">
-        <form id="add-habit-form">
-          <input id="habit-input" placeholder="Lisää uusi habit…" />
-          <button type="submit" class="btn primary small">+</button>
-        </form>
-        <p id="habit-count"></p>
-        <div id="habits-list"></div>
-      </div>
-    </section>
+        <p class="sub-hint">
+          Lisää omat verilinjan rutiinit. Ruksaa ne, jotka suoritit tänään.
+        </p>
 
-    <!-- BOSS + REVIEW + RESET -->
-    <section id="boss-card" class="card">
-      <div class="section-title-row">
-        <h2>WEEKLY BOSS</h2>
-        <div class="boss-actions">
-          <button id="open-review" class="btn ghost tiny">Review 90d</button>
-          <button id="btn-reset" class="btn danger tiny">Reset</button>
+        <div id="habit-add-row">
+          <input id="habit-input" type="text" placeholder="Uusi habit (esim. Treeni)" />
+          <button id="habit-add-btn" class="btn primary small">Lisää</button>
         </div>
-      </div>
-      <div id="boss-inner">
-        <p id="boss-name" class="boss-name">Ei bossia vielä – kerää dataa.</p>
-        <p id="boss-weakness" class="boss-line"></p>
-        <p id="boss-goal" class="boss-line"></p>
-        <p id="boss-reward" class="boss-line"></p>
-      </div>
+
+        <ul id="habit-list"></ul>
+      </section>
+
+      <!-- DAY SUMMARY + FINALIZE -->
+      <section id="summary-card" class="card">
+        <h2>TÄMÄ PÄIVÄ</h2>
+        <p class="sub-hint">Näet nopeasti paljonko tuli kasaan.</p>
+
+        <div id="summary-stats">
+          <div class="qstat">
+            <span>Habits Score</span>
+            <strong id="habit-score-label">0</strong>
+          </div>
+          <div class="qstat">
+            <span>Wake Score</span>
+            <strong id="summary-wake-score-label">0</strong>
+          </div>
+          <div class="qstat">
+            <span>Total Score</span>
+            <strong id="total-score-label">0</strong>
+          </div>
+        </div>
+
+        <button id="btn-finalize-day" class="btn primary fullwidth">
+          Finalize Day • Lukitse ja väritä
+        </button>
+      </section>
     </section>
 
   </main>
 
-  <!-- DAY MODAL (BOTTOM SHEET, OTTELU-KORTTI) -->
-  <div id="modal-backdrop">
+  <!-- DAY DETAILS MODAL -->
+  <div id="day-modal-backdrop">
     <div id="day-modal">
       <div class="modal-header">
-        <h2 id="modal-title">DAY</h2>
-        <button id="btn-close-modal" class="btn ghost tiny">Close</button>
+        <h3 id="modal-day-title">Päivä</h3>
+        <button id="modal-close" class="btn ghost tiny">Sulje</button>
       </div>
-
       <section class="modal-section">
-        <h3>Habits</h3>
-        <div id="modal-habits"></div>
+        <p><span>Wake time:</span> <strong id="modal-wake-time">—</strong></p>
+        <p><span>Wake Score:</span> <strong id="modal-wake-score">0</strong></p>
+        <p><span>Habits Score:</span> <strong id="modal-habit-score">0</strong></p>
+        <p><span>Energy Score:</span> <strong id="modal-energy-score">0</strong></p>
+        <p><span>Total Score:</span> <strong id="modal-total-score">0</strong></p>
+        <p><span>Money spent (€):</span> <strong id="modal-money-spent">0.00</strong></p>
+        <p><span>Tomorrow energy (pred.):</span> <strong id="modal-tomorrow-energy">—</strong></p>
+        <p><span>Habits suoritettu:</span></p>
+        <ul id="modal-habits"></ul>
+        <p><span>Energy events:</span></p>
+        <ul id="modal-energy-list"></ul>
       </section>
-
-      <section class="modal-section">
-        <h3>Päivän tavoite %</h3>
-        <div class="inline-row">
-          <input id="goal-target-input" type="number" min="1" max="100" placeholder="esim. 80" />
-          <button id="btn-set-goal" class="btn primary tiny">Set</button>
-        </div>
-      </section>
-
-      <section class="modal-section">
-        <h3>Mood & Focus (1–10)</h3>
-        <div id="mood-focus-row">
-          <input id="mood-input" type="number" min="1" max="10" placeholder="Mood" />
-          <input id="focus-input" type="number" min="1" max="10" placeholder="Focus" />
-        </div>
-      </section>
-
-      <section class="modal-section">
-        <h3>Energy Events</h3>
-        <div id="energy-buttons">
-          <button class="energy-btn" data-type="Water">💧</button>
-          <button class="energy-btn" data-type="Move">🏃‍♂️</button>
-          <button class="energy-btn" data-type="Protein">🍫💪</button>
-          <button class="energy-btn" data-type="Coffee">☕</button>
-          <button class="energy-btn" data-type="Meal">🍽️</button>
-          <button class="energy-btn" data-type="Nicotine">🚬❌</button>
-        </div>
-      </section>
-
-      <!-- PÄIVÄN ENERGIA-BREAKDOWN -->
-      <section class="modal-section">
-        <h3>Päivän energiadata</h3>
-        <ul id="energy-breakdown"></ul>
-      </section>
-
-      <section class="modal-section">
-        <h3>Shots (päivä)</h3>
-        <p class="shots-line"><span>Päivän laukaukset:</span> <strong id="modal-day-shots">0</strong></p>
-        <button id="btn-day-shot" class="btn warning small">💣 SHOT</button>
-      </section>
-
-      <section class="modal-section">
-        <h3>Stats</h3>
-        <p><span>Status:</span> <strong id="modal-status">open</strong></p>
-        <p><span>Score:</span> <strong id="modal-score">—</strong></p>
-        <p><span>PR:</span> <strong id="modal-pr">—</strong></p>
-        <p><span>Behavior Value:</span> <strong id="modal-behavior-value">0</strong></p>
-        <p><span>Goal Result:</span> <span id="modal-goal-result" class="goal-tag">—</span></p>
-      </section>
-
-      <div id="modal-actions">
-        <button id="btn-finalize" class="btn primary">Finalize Day</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- REVIEW MODAL (HIGHLIGHT REEL) -->
-  <div id="review-backdrop">
-    <div id="review-modal">
-      <div class="modal-header">
-        <h2>90 DAY REVIEW</h2>
-        <button id="btn-close-review" class="btn ghost tiny">Close</button>
-      </div>
-
-      <section class="review-section">
-        <h3>Score Over 90 Days</h3>
-        <canvas id="chart-score"></canvas>
-      </section>
-
-      <section class="review-section">
-        <h3>Mood & Focus</h3>
-        <canvas id="chart-moodfocus"></canvas>
-      </section>
-
-      <section class="review-section">
-        <h3>Behavior Value</h3>
-        <canvas id="chart-behavior"></canvas>
-      </section>
-
-      <section class="review-section">
-        <h3>Insights</h3>
-        <ul id="insights-list"></ul>
-      </section>
-    </div>
-  </div>
-
-  <!-- MOVE MODE PICKER -->
-  <div id="move-mode-backdrop">
-    <div id="move-mode-sheet">
-      <h3>Valitse liike</h3>
-      <p class="move-hint">Nopea merkintä, ei selittelyä: miltä tämä liike tuntui?</p>
-      <div class="move-mode-row">
-        <button class="move-mode-btn" data-mode="Walk">🚶 Walk</button>
-        <button class="move-mode-btn" data-mode="Run">🏃 Run</button>
-        <button class="move-mode-btn" data-mode="Gym">🏋 Gym</button>
-        <button class="move-mode-btn" data-mode="Sport">⚽ Sport</button>
-        <button class="move-mode-btn" data-mode="Mobility">🧘 Mobility</button>
-      </div>
-      <button id="move-mode-cancel" class="btn ghost tiny fullwidth">Peruuta</button>
     </div>
   </div>
 
