@@ -27,7 +27,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 10px 12px 8px;
+  padding: 8px 10px 6px;
   background: radial-gradient(circle at top, #020617 0, #020617 45%, #000 100%);
   border-bottom: 1px solid var(--border);
   position: sticky;
@@ -48,7 +48,7 @@ body {
 }
 .bloodliner-b {
   font-weight: 900;
-  font-size: 26px;
+  font-size: 24px;
   color: #ef4444;
   text-shadow: 0 0 22px rgba(248, 113, 113, 0.9);
 }
@@ -57,12 +57,12 @@ body {
   flex-direction: column;
 }
 .bloodliner-title {
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 0.18em;
   color: var(--text-main);
 }
 .bloodliner-sub {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--text-muted);
 }
 
@@ -79,16 +79,16 @@ body {
   display: flex;
   flex-direction: column;
   font-size: 9px;
-  min-width: 60px;
+  min-width: 58px;
 }
 .hud-chip.small {
-  min-width: 80px;
+  min-width: 76px;
 }
 .hud-chip span {
   color: var(--text-muted);
 }
 .hud-chip strong {
-  font-size: 13px;
+  font-size: 12px;
 }
 
 /* ESPN-LIVE TICKER */
@@ -96,7 +96,7 @@ body {
   position: sticky;
   top: 48px;
   z-index: 40;
-  height: 26px;
+  height: 24px;
   border-top: 1px solid #111827;
   border-bottom: 1px solid #111827;
   background: linear-gradient(90deg, #020617, #111827, #020617);
@@ -122,12 +122,12 @@ body {
   }
 }
 
-/* LAYOUT */
+/* LAYOUT – MOBILE FIRST */
 #layout {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr 1fr;
-  gap: 10px;
-  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
 }
 
 .card {
@@ -154,7 +154,7 @@ body {
 /* GRID CARD */
 #day-grid {
   display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr)); /* mobiilissa 6 per rivi */
   gap: 4px;
 }
 
@@ -220,12 +220,11 @@ body {
   box-shadow: 0 0 12px rgba(250, 204, 21, 0.8);
 }
 
-/* LEFT + RIGHT COLUMNS */
-#left-column,
-#right-column {
+/* STACK COLUMN (wake + energy + habits + summary) */
+#stack-column {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 /* WAKE CARD */
@@ -255,7 +254,7 @@ body {
   border-radius: 10px;
   border: 1px solid var(--border);
   background: #020617;
-  padding: 6px 6px;
+  padding: 8px 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -333,7 +332,7 @@ body {
   gap: 6px;
 }
 .habit-name {
-  max-width: 150px;
+  max-width: 200px;
 }
 .habit-delete {
   border: none;
@@ -375,6 +374,10 @@ body {
 }
 .btn.fullwidth {
   width: 100%;
+}
+.btn.big {
+  padding: 10px 14px;
+  font-size: 13px;
 }
 
 /* SUMMARY CARD */
@@ -435,13 +438,32 @@ body {
   margin-bottom: 2px;
 }
 
-/* RESPONSIVE */
-@media (max-width: 900px) {
+/* DESKTOP / ISOMPI NÄYTTÖ */
+@media (min-width: 900px) {
   #layout {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  #grid-card {
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
+  }
+
+  #stack-column {
+    grid-column: 2 / 3;
+    grid-row: 1 / 3;
+  }
+
+  #day-grid {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
   }
 }
-@media (max-width: 480px) {
+
+@media (max-width: 520px) {
   #hud {
     flex-wrap: wrap;
     gap: 6px;
@@ -450,3 +472,4 @@ body {
     top: auto;
   }
 }
+
