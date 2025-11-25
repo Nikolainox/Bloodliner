@@ -1,20 +1,20 @@
 /* ------------------------------------------------------
-   BLOODLINER 90 • Project 1 (B + ESPN TICKER, mobile-first)
+   BLOODLINER 90 • GHOST FUTURE + WAKE TIME INPUT
    - 90-day habit + energy + economy scoreboard
-   - A+ Prime Wake: yksi nappi, logiikka taustalla
-   - Habits näkyvät päiväkortilla (✓) + modalissa
+   - A+ Prime Wake (nappi + manuaalinen aika)
+   - Nicotine Reduction Line (clean streak)
+   - Ghost Future Engine (HUD + ticker + grid + modal)
    - Bayes-tyylinen huomisen energian ennuste
-   - ESPN-tyylinen ticker, joka päivittyy datasta
    - LocalStorage only
 ------------------------------------------------------ */
 
-const STORAGE_KEY = "bloodliner_v1_AplusWake";
+const STORAGE_KEY = "bloodliner_v3_ghost_wakeinput";
 
-// Oletus prime window: 06:00–08:00
+// PRIME WAKE WINDOW (06:00–08:00)
 const PRIME_START_MIN = 6 * 60;
 const PRIME_END_MIN = 8 * 60;
 
-// Energy-kertoimet (score)
+// ENERGY SCORE WEIGHTS
 const ENERGY_WEIGHTS = {
   nicotine: -2,
   coffee: -1,
@@ -24,7 +24,7 @@ const ENERGY_WEIGHTS = {
   shots: -20
 };
 
-// Money (€ per click), water positiivisena "minuskulutuksena"
+// MONEY (€) PER EVENT
 const MONEY_WEIGHTS = {
   nicotine: 0.5,
   coffee: 1.5,
@@ -34,41 +34,42 @@ const MONEY_WEIGHTS = {
   shots: 5.0
 };
 
-// Default habits
+// DEFAULT HABITS
 const DEFAULT_HABITS = [
   "Treeni",
   "Deep Work",
   "Päiväkirja",
-  "Ei some-scrollia illalla"
+  "Ei some-scrollia"
 ];
 
+// INITIAL DATA
 let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
   days: {},
   currentDay: 1,
   lastCompletedDay: null,
   streak: 0,
+  nicCleanStreak: 0,
+  ghostDistance: 1.0, // AU (astronomical-style unit)
   habits: DEFAULT_HABITS
 };
 
-// Init päivät 1–90
+// Init days 1–90
 for (let i = 1; i <= 90; i++) {
-  if (!data.days[i]) {
-    data.days[i] = createEmptyDay(i);
-  }
+  if (!data.days[i]) data.days[i] = createEmptyDay(i);
 }
-if (!Array.isArray(data.habits)) {
-  data.habits = DEFAULT_HABITS;
-}
-if (!data.currentDay || data.currentDay < 1 || data.currentDay > 90) {
-  data.currentDay = 1;
-}
+if (!Array.isArray(data.habits)) data.habits = DEFAULT_HABITS;
+if (typeof data.nicCleanStreak !== "number") data.nicCleanStreak = 0;
+if (typeof data.ghostDistance !== "number") data.ghostDistance = 1.0;
+
 save();
 
-/* HELPERS */
+/* ------------------------------------------------------
+   HELPERS
+------------------------------------------------------ */
 
-function createEmptyDay(dayNumber) {
+function createEmptyDay(n) {
   return {
-    dayNumber,
+    dayNumber: n,
     wakeTimeMinutes: null,
     wakeScore: 0,
     energy: {
@@ -81,12 +82,15 @@ function createEmptyDay(dayNumber) {
     },
     moneySpent: 0,
     energyScore: 0,
-    habitsDone: {}, // {habitName: true}
+    habitsDone: {},
     habitScore: 0,
     totalScore: 0,
     tomorrowEnergy: null,
     locked: false,
-    pr: false
+    pr: false,
+    // Ghost Future data for this day
+    ghostDelta: 0,
+    ghostDistanceAfter: null
   };
 }
 
@@ -98,85 +102,109 @@ function formatTimeFromMinutes(mins) {
   if (mins == null) return "—";
   let h = Math.floor(mins / 60);
   let m = mins % 60;
-  if (h < 0) h = 0;
-  if (h > 23) h = h % 24;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function calculateWakeScore(minutes) {
-  if (minutes == null) return 0;
-  if (minutes >= PRIME_START_MIN && minutes <= PRIME_END_MIN) {
-    return 20; // prime hit
-  }
-  if (minutes > PRIME_END_MIN && minutes <= PRIME_END_MIN + 30) {
-    return 5; // vähän myöhässä
-  }
-  if (minutes > PRIME_END_MIN + 30 && minutes <= PRIME_END_MIN + 90) {
-    return -10; // liikaa nukuttu
-  }
-  // muuten reippaasti yli -> rankempi miinus
+function calculateWakeScore(mins) {
+  if (mins == null) return 0;
+  if (mins >= PRIME_START_MIN && mins <= PRIME_END_MIN) return 20;
+  if (mins <= PRIME_END_MIN + 30) return 5;
+  if (mins <= PRIME_END_MIN + 90) return -10;
   return -20;
 }
 
-function calculateEnergyScore(energy) {
+function calculateEnergyScore(e) {
   let score = 0;
-  for (const key of Object.keys(ENERGY_WEIGHTS)) {
-    const reps = energy[key] || 0;
-    score += reps * ENERGY_WEIGHTS[key];
+  for (const k of Object.keys(ENERGY_WEIGHTS)) {
+    score += (e[k] || 0) * ENERGY_WEIGHTS[k];
   }
   return score;
 }
 
-function calculateMoneySpent(energy) {
-  let total = 0;
-  for (const key of Object.keys(MONEY_WEIGHTS)) {
-    const reps = energy[key] || 0;
-    total += reps * MONEY_WEIGHTS[key];
+function calculateMoney(e) {
+  let euro = 0;
+  for (const k of Object.keys(MONEY_WEIGHTS)) {
+    euro += (e[k] || 0) * MONEY_WEIGHTS[k];
   }
-  return total;
+  return euro;
 }
 
-function calculateHabitScore(habitsDone) {
-  const count = Object.values(habitsDone || {}).filter(Boolean).length;
-  return count * 10;
+function calculateHabitScore(map) {
+  return Object.values(map).filter(Boolean).length * 10;
 }
 
 function calculateTomorrowEnergy(totalScore) {
-  // Shadow-Bayes: 50 baseline + totalScore/2, capped 0–100
-  let val = 50 + totalScore / 2;
-  if (val < 0) val = 0;
-  if (val > 100) val = 100;
-  return Math.round(val);
+  let v = 50 + totalScore / 2;
+  if (v < 0) v = 0;
+  if (v > 100) v = 100;
+  return Math.round(v);
 }
 
-function recomputeDay(dayNumber) {
-  const day = data.days[dayNumber];
-  if (!day) return;
-
-  day.wakeScore = calculateWakeScore(day.wakeTimeMinutes);
-  day.energyScore = calculateEnergyScore(day.energy);
-  day.moneySpent = calculateMoneySpent(day.energy);
-  day.habitScore = calculateHabitScore(day.habitsDone);
-  day.totalScore = day.wakeScore + day.energyScore + day.habitScore;
-  day.tomorrowEnergy = calculateTomorrowEnergy(day.totalScore);
+function recomputeDay(n) {
+  const d = data.days[n];
+  d.wakeScore = calculateWakeScore(d.wakeTimeMinutes);
+  d.energyScore = calculateEnergyScore(d.energy);
+  d.moneySpent = calculateMoney(d.energy);
+  d.habitScore = calculateHabitScore(d.habitsDone);
+  d.totalScore = d.wakeScore + d.energyScore + d.habitScore;
+  d.tomorrowEnergy = calculateTomorrowEnergy(d.totalScore);
 }
 
-/* DOM ELEMENTS */
+/**
+ * GHOST FUTURE ENGINE:
+ * Laskee kuinka paljon ghost-liikettä tapahtuu tänä päivänä.
+ * Palauttaa delta AU-yksiköissä:
+ *  - negatiivinen = ghost tulee lähemmäs
+ *  - positiivinen = ghost loittonee
+ */
+function computeGhostDelta(day) {
+  let normalized = day.totalScore / 100;
+  if (normalized > 1) normalized = 1;
+  if (normalized < -1) normalized = -1;
+  let delta = -normalized * 0.04; // hyvät pisteet -> lähemmäs (negatiivinen)
+
+  // Nikotiini rankaisee
+  delta += (day.energy.nicotine || 0) * 0.04;
+
+  // Shots vielä rankempi
+  delta += (day.energy.shots || 0) * 0.06;
+
+  // Tyhjä päivä -> ei liikettä
+  const hasAny =
+    day.totalScore !== 0 ||
+    day.wakeTimeMinutes != null ||
+    Object.values(day.energy).some((v) => v > 0) ||
+    Object.values(day.habitsDone).some(Boolean);
+  if (!hasAny) delta = 0;
+
+  return delta;
+}
+
+/* ------------------------------------------------------
+   DOM ELEMENTS
+------------------------------------------------------ */
 
 const hudDay = document.getElementById("hud-day");
 const hudStreak = document.getElementById("hud-streak");
+const hudNicStreak = document.getElementById("hud-nic-streak");
+const hudGhost = document.getElementById("hud-ghost");
 const hudTotalScore = document.getElementById("hud-total-score");
-const btnReset = document.getElementById("btn-reset");
 
 const dayGrid = document.getElementById("day-grid");
-
-// Ticker
-const tickerInner = document.getElementById("ticker-inner");
+const btnReset = document.getElementById("btn-reset");
 
 // Wake
 const btnWakeNow = document.getElementById("btn-wake-now");
+const btnWakeInput = document.getElementById("btn-wake-input");
 const wakeTimeLabel = document.getElementById("wake-time-label");
 const wakeScoreLabel = document.getElementById("wake-score-label");
+
+// Wake modal
+const wakeModalBackdrop = document.getElementById("wake-modal-backdrop");
+const wakeModal = document.getElementById("wake-modal");
+const wakeTimeInput = document.getElementById("wake-time-input");
+const wakeModalCancel = document.getElementById("wake-modal-cancel");
+const wakeModalSave = document.getElementById("wake-modal-save");
 
 // Energy
 const energyButtons = document.querySelectorAll(".energy-btn");
@@ -203,7 +231,7 @@ const totalScoreLabel = document.getElementById("total-score-label");
 const btnFinalizeDay = document.getElementById("btn-finalize-day");
 
 // Modal
-const dayModalBackdrop = document.getElementById("day-modal-backdrop");
+const modalBackdrop = document.getElementById("day-modal-backdrop");
 const modalDayTitle = document.getElementById("modal-day-title");
 const modalWakeTime = document.getElementById("modal-wake-time");
 const modalWakeScore = document.getElementById("modal-wake-score");
@@ -212,93 +240,108 @@ const modalEnergyScore = document.getElementById("modal-energy-score");
 const modalTotalScore = document.getElementById("modal-total-score");
 const modalMoneySpent = document.getElementById("modal-money-spent");
 const modalTomorrowEnergy = document.getElementById("modal-tomorrow-energy");
-const modalHabitsList = document.getElementById("modal-habits");
+const modalGhostDistance = document.getElementById("modal-ghost-distance");
+const modalGhostShift = document.getElementById("modal-ghost-shift");
+const modalHabits = document.getElementById("modal-habits");
 const modalEnergyList = document.getElementById("modal-energy-list");
-const modalCloseBtn = document.getElementById("modal-close");
+const modalClose = document.getElementById("modal-close");
 
-/* RENDER FUNCTIONS */
+// Ticker
+const tickerInner = document.getElementById("ticker-inner");
+
+/* ------------------------------------------------------
+   RENDERING
+------------------------------------------------------ */
 
 function renderHUD() {
   hudDay.textContent = `${data.currentDay} / 90`;
   hudStreak.textContent = data.streak || 0;
+  hudNicStreak.textContent = data.nicCleanStreak || 0;
+  hudGhost.textContent = `${data.ghostDistance.toFixed(2)} AU`;
 
   let total = 0;
-  for (let i = 1; i <= 90; i++) {
-    total += data.days[i].totalScore || 0;
-  }
+  for (let i = 1; i <= 90; i++) total += data.days[i].totalScore || 0;
   hudTotalScore.textContent = total;
 }
 
 function renderGrid() {
   dayGrid.innerHTML = "";
+
   let maxScore = 0;
   for (let i = 1; i <= 90; i++) {
-    const score = data.days[i].totalScore || 0;
-    if (score > maxScore) maxScore = score;
+    maxScore = Math.max(maxScore, data.days[i].totalScore || 0);
   }
 
   for (let i = 1; i <= 90; i++) {
-    const day = data.days[i];
+    const d = data.days[i];
     const cell = document.createElement("div");
-    cell.classList.add("day-cell");
+    cell.className = "day-cell";
     cell.dataset.day = i;
 
-    const score = day.totalScore;
+    // Score-color
     let cls = "day-empty";
-    if (score > 0 && maxScore > 0) {
-      const ratio = score / maxScore;
-      if (ratio < 0.25) cls = "day-low";
-      else if (ratio < 0.5) cls = "day-mid";
-      else if (ratio < 0.8) cls = "day-high";
+    if (d.totalScore > 0 && maxScore > 0) {
+      const r = d.totalScore / maxScore;
+      if (r < 0.25) cls = "day-low";
+      else if (r < 0.5) cls = "day-mid";
+      else if (r < 0.8) cls = "day-high";
       else cls = "day-elite";
     }
     cell.classList.add(cls);
-    if (i === data.currentDay) cell.classList.add("current");
-    if (day.pr) cell.classList.add("pr");
 
-    // Habits marker
-    const hasHabitsDone = Object.values(day.habitsDone || {}).some(Boolean);
-    if (hasHabitsDone) {
+    // Habit marker
+    if (Object.values(d.habitsDone).some(Boolean))
       cell.classList.add("day-habits-done");
+
+    // Nicotine clean
+    if ((d.energy.nicotine || 0) === 0)
+      cell.classList.add("day-clean");
+
+    // Ghost movement visual
+    if (typeof d.ghostDelta === "number" && d.ghostDelta !== 0) {
+      if (d.ghostDelta < 0) cell.classList.add("day-ghost-closer");
+      else cell.classList.add("day-ghost-farther");
     }
 
+    // Current + PR
+    if (i === data.currentDay) cell.classList.add("current");
+    if (d.pr) cell.classList.add("pr");
+
     cell.innerHTML = `<span>${i}</span>`;
-    cell.addEventListener("click", () => handleDayClick(i));
+    cell.addEventListener("click", () => openDay(i));
     dayGrid.appendChild(cell);
   }
 }
 
 function renderCurrentDay() {
-  const day = data.days[data.currentDay];
+  const d = data.days[data.currentDay];
 
   // Wake
-  wakeTimeLabel.textContent = formatTimeFromMinutes(day.wakeTimeMinutes);
-  wakeScoreLabel.textContent = day.wakeScore.toString();
+  wakeTimeLabel.textContent = formatTimeFromMinutes(d.wakeTimeMinutes);
+  wakeScoreLabel.textContent = d.wakeScore;
 
-  // Energy counts
-  cntNicotine.textContent = day.energy.nicotine || 0;
-  cntCoffee.textContent = day.energy.coffee || 0;
-  cntWater.textContent = day.energy.water || 0;
-  cntProtein.textContent = day.energy.protein || 0;
-  cntMeal.textContent = day.energy.meal || 0;
-  cntShots.textContent = day.energy.shots || 0;
+  // Energy
+  cntNicotine.textContent = d.energy.nicotine;
+  cntCoffee.textContent = d.energy.coffee;
+  cntWater.textContent = d.energy.water;
+  cntProtein.textContent = d.energy.protein;
+  cntMeal.textContent = d.energy.meal;
+  cntShots.textContent = d.energy.shots;
 
-  energyScoreLabel.textContent = day.energyScore.toString();
-  moneySpentLabel.textContent = day.moneySpent.toFixed(2);
+  energyScoreLabel.textContent = d.energyScore;
+  moneySpentLabel.textContent = d.moneySpent.toFixed(2);
   tomorrowEnergyLabel.textContent =
-    day.tomorrowEnergy == null ? "—" : `${day.tomorrowEnergy}`;
+    d.tomorrowEnergy == null ? "—" : d.tomorrowEnergy;
 
-  // Habits summary
-  habitScoreLabel.textContent = day.habitScore.toString();
-  summaryWakeScoreLabel.textContent = day.wakeScore.toString();
-  totalScoreLabel.textContent = day.totalScore.toString();
-
-  // Habits list
+  // Habits
   renderHabitList();
+  habitScoreLabel.textContent = d.habitScore;
+  summaryWakeScoreLabel.textContent = d.wakeScore;
+  totalScoreLabel.textContent = d.totalScore;
 }
 
 function renderHabitList() {
-  const day = data.days[data.currentDay];
+  const d = data.days[data.currentDay];
   habitListEl.innerHTML = "";
 
   data.habits.forEach((habit) => {
@@ -308,40 +351,35 @@ function renderHabitList() {
     const left = document.createElement("div");
     left.className = "habit-left";
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = !!day.habitsDone[habit];
-    checkbox.addEventListener("change", () => {
-      if (day.locked) {
-        checkbox.checked = !checkbox.checked;
-        alert("Päivä on lukittu (finalized). Et voi muuttaa habiteja.");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = !!d.habitsDone[habit];
+    cb.addEventListener("change", () => {
+      if (d.locked) {
+        cb.checked = !cb.checked;
+        alert("Päivä on lukittu.");
         return;
       }
-      day.habitsDone[habit] = checkbox.checked;
+      d.habitsDone[habit] = cb.checked;
       recomputeDay(data.currentDay);
       updateAll();
     });
 
     const span = document.createElement("span");
-    span.className = "habit-name";
     span.textContent = habit;
 
-    left.appendChild(checkbox);
+    left.appendChild(cb);
     left.appendChild(span);
 
     const delBtn = document.createElement("button");
     delBtn.className = "habit-delete";
     delBtn.textContent = "✕";
     delBtn.addEventListener("click", () => {
-      if (!confirm(`Poistetaanko habit "${habit}" kaikilta päiviltä?`)) return;
-      // Remove from global list
+      if (!confirm("Poistetaanko habit kaikilta päiviltä?")) return;
       data.habits = data.habits.filter((h) => h !== habit);
-      // Remove from each day
       for (let i = 1; i <= 90; i++) {
-        if (data.days[i].habitsDone[habit]) {
-          delete data.days[i].habitsDone[habit];
-          recomputeDay(i);
-        }
+        delete data.days[i].habitsDone[habit];
+        recomputeDay(i);
       }
       save();
       updateAll();
@@ -353,122 +391,246 @@ function renderHabitList() {
   });
 }
 
-/* ESPN TICKER */
+/* ------------------------------------------------------
+   TICKER
+------------------------------------------------------ */
 
 function updateTicker() {
-  let segments = [];
+  const segs = [];
 
   for (let i = 1; i <= 90; i++) {
-    const day = data.days[i];
-    if (!day) continue;
-    const score = day.totalScore || 0;
-    const money = day.moneySpent || 0;
-    const tomorrow = day.tomorrowEnergy;
-    const wake = formatTimeFromMinutes(day.wakeTimeMinutes);
+    const d = data.days[i];
+    const used =
+      d.habitScore !== 0 ||
+      d.energyScore !== 0 ||
+      d.wakeTimeMinutes != null ||
+      Object.values(d.energy).some((v) => v > 0);
 
-    const hasAny =
-      score !== 0 ||
-      day.wakeTimeMinutes != null ||
-      Object.values(day.energy || {}).some((v) => v > 0) ||
-      Object.values(day.habitsDone || {}).some(Boolean);
+    if (!used) continue;
 
-    if (!hasAny) continue;
-
-    let label = `DAY ${i} • SCORE ${score} • WAKE ${wake} • €${money.toFixed(
-      2
-    )}`;
-    if (tomorrow != null) {
-      label += ` • TOMORROW ${tomorrow}`;
+    let s = `DAY ${i} • SCORE ${d.totalScore}`;
+    s += ` • WAKE ${formatTimeFromMinutes(d.wakeTimeMinutes)}`;
+    s += ` • €${d.moneySpent.toFixed(2)}`;
+    if ((d.energy.nicotine || 0) === 0) s += " • CLEAN";
+    if (d.pr) s += " • PR🔥";
+    if (typeof d.ghostDistanceAfter === "number") {
+      s += ` • GHOST ${d.ghostDistanceAfter.toFixed(2)} AU`;
     }
-    if (day.pr) {
-      label += " • PR🔥";
-    }
-    segments.push(label);
+
+    segs.push(s);
   }
 
-  if (segments.length === 0) {
-    tickerInner.textContent = "BLOODLINER 90 • NO DATA YET • START DAY 1 TODAY";
-  } else {
-    const text = "  |  " + segments.join("  |  ") + "  |  ";
-    tickerInner.textContent = text;
-  }
+  tickerInner.textContent =
+    segs.length === 0
+      ? "BLOODLINER 90 • READY"
+      : " | " + segs.join(" | ") + " | ";
 
-  // Reset animation (jos sisältö muuttuu)
   tickerInner.style.animation = "none";
   void tickerInner.offsetWidth;
-  tickerInner.style.animation = "";
   tickerInner.style.animation = "ticker-scroll 30s linear infinite";
 }
 
-/* EVENTS */
+/* ------------------------------------------------------
+   DAY MODAL
+------------------------------------------------------ */
 
-// Reset
-btnReset.addEventListener("click", () => {
-  const ok = confirm("Reset Bloodliner 90? Kaikki data poistetaan.");
-  if (!ok) return;
-  localStorage.removeItem(STORAGE_KEY);
-  location.reload();
+function openDay(n) {
+  data.currentDay = n;
+  save();
+  renderHUD();
+  renderGrid();
+  renderCurrentDay();
+  updateTicker();
+
+  const d = data.days[n];
+
+  modalDayTitle.textContent = `Päivä ${n}`;
+  modalWakeTime.textContent = formatTimeFromMinutes(d.wakeTimeMinutes);
+  modalWakeScore.textContent = d.wakeScore;
+  modalHabitScore.textContent = d.habitScore;
+  modalEnergyScore.textContent = d.energyScore;
+  modalTotalScore.textContent = d.totalScore;
+  modalMoneySpent.textContent = d.moneySpent.toFixed(2);
+  modalTomorrowEnergy.textContent =
+    d.tomorrowEnergy == null ? "—" : d.tomorrowEnergy;
+
+  if (typeof d.ghostDistanceAfter === "number") {
+    modalGhostDistance.textContent = `${d.ghostDistanceAfter.toFixed(2)} AU`;
+  } else {
+    modalGhostDistance.textContent = "—";
+  }
+
+  if (typeof d.ghostDelta === "number" && d.ghostDelta !== 0) {
+    if (d.ghostDelta < 0) {
+      modalGhostShift.textContent = `Closer ${Math.abs(d.ghostDelta).toFixed(3)} AU`;
+    } else {
+      modalGhostShift.textContent = `Farther ${d.ghostDelta.toFixed(3)} AU`;
+    }
+  } else {
+    modalGhostShift.textContent = "—";
+  }
+
+  // Habits list
+  modalHabits.innerHTML = "";
+  const done = Object.entries(d.habitsDone).filter(([_, v]) => v);
+  if (done.length === 0) {
+    modalHabits.innerHTML = "<li>Ei suoritettuja habiteja.</li>";
+  } else {
+    done.forEach(([name]) => {
+      const li = document.createElement("li");
+      li.textContent = name;
+      modalHabits.appendChild(li);
+    });
+  }
+
+  // Energy list
+  modalEnergyList.innerHTML = "";
+  const labels = {
+    nicotine: "Nicotine 🚬",
+    coffee: "Coffee ☕",
+    water: "Water 💧",
+    protein: "Protein 🥫",
+    meal: "Meal 🍽️",
+    shots: "Shots 🧊"
+  };
+  let any = false;
+  for (const k of Object.keys(labels)) {
+    if (d.energy[k] > 0) {
+      any = true;
+      const li = document.createElement("li");
+      li.textContent = `${labels[k]}: ${d.energy[k]}`;
+      modalEnergyList.appendChild(li);
+    }
+  }
+  if (!any) {
+    modalEnergyList.innerHTML = "<li>Ei energia-tapahtumia.</li>";
+  }
+
+  modalBackdrop.style.display = "flex";
+}
+
+modalClose.addEventListener("click", () => {
+  modalBackdrop.style.display = "none";
+});
+modalBackdrop.addEventListener("click", (e) => {
+  if (e.target === modalBackdrop) modalBackdrop.style.display = "none";
 });
 
-// Wake now
+/* ------------------------------------------------------
+   WAKE TIME INPUT MODAL
+------------------------------------------------------ */
+
+btnWakeInput.addEventListener("click", () => {
+  const d = data.days[data.currentDay];
+  if (d.locked) {
+    alert("Päivä on lukittu.");
+    return;
+  }
+  wakeTimeInput.value = ""; // tyhjäksi
+  wakeModalBackdrop.style.display = "flex";
+});
+
+wakeModalCancel.addEventListener("click", () => {
+  wakeModalBackdrop.style.display = "none";
+});
+
+wakeModalBackdrop.addEventListener("click", (e) => {
+  if (e.target === wakeModalBackdrop) {
+    wakeModalBackdrop.style.display = "none";
+  }
+});
+
+wakeModalSave.addEventListener("click", () => {
+  const val = wakeTimeInput.value;
+  if (!val) {
+    alert("Syötä aika muodossa hh:mm.");
+    return;
+  }
+  const [hhStr, mmStr] = val.split(":");
+  const hh = parseInt(hhStr, 10);
+  const mm = parseInt(mmStr, 10);
+  if (
+    Number.isNaN(hh) ||
+    Number.isNaN(mm) ||
+    hh < 0 ||
+    hh > 23 ||
+    mm < 0 ||
+    mm > 59
+  ) {
+    alert("Aika ei kelpaa.");
+    return;
+  }
+  const mins = hh * 60 + mm;
+  const d = data.days[data.currentDay];
+  if (d.locked) {
+    alert("Päivä on lukittu.");
+    wakeModalBackdrop.style.display = "none";
+    return;
+  }
+  d.wakeTimeMinutes = mins;
+  recomputeDay(data.currentDay);
+  save();
+  updateAll();
+  wakeModalBackdrop.style.display = "none";
+});
+
+/* ------------------------------------------------------
+   EVENTS
+------------------------------------------------------ */
+
 btnWakeNow.addEventListener("click", () => {
-  const day = data.days[data.currentDay];
-  if (day.locked) {
-    alert("Päivä on lukittu (finalized). Wake-merkintää ei voi muuttaa.");
+  const d = data.days[data.currentDay];
+  if (d.locked) {
+    alert("Päivä on lukittu.");
     return;
   }
   const now = new Date();
   const mins = now.getHours() * 60 + now.getMinutes();
-  day.wakeTimeMinutes = mins;
+  d.wakeTimeMinutes = mins;
   recomputeDay(data.currentDay);
   updateAll();
 });
 
-// Energy click
 energyButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
-    const type = btn.dataset.type;
-    const day = data.days[data.currentDay];
-    if (day.locked) {
-      alert("Päivä on lukittu (finalized). Energy-tapahtumia ei voi lisätä.");
+    const t = btn.dataset.type;
+    const d = data.days[data.currentDay];
+    if (d.locked) {
+      alert("Päivä on lukittu.");
       return;
     }
-    if (!day.energy[type] && day.energy[type] !== 0) {
-      day.energy[type] = 0;
-    }
-    day.energy[type] += 1;
+    d.energy[t]++;
     recomputeDay(data.currentDay);
     updateAll();
   });
 });
 
-// Habit add
 habitAddBtn.addEventListener("click", () => {
   const name = habitInput.value.trim();
   if (!name) return;
   if (data.habits.includes(name)) {
-    alert("Tämä habit on jo listalla.");
+    alert("Habit jo olemassa.");
     return;
   }
   data.habits.push(name);
   habitInput.value = "";
   save();
-  renderHabitList();
-  updateTicker();
+  updateAll();
 });
 
-// Finalize day
 btnFinalizeDay.addEventListener("click", () => {
-  const day = data.days[data.currentDay];
-  if (day.locked) {
+  const d = data.days[data.currentDay];
+  if (d.locked) {
     alert("Päivä on jo finalized.");
     return;
   }
 
+  // Tyhjä päivä? Varmistus
   if (
-    !day.wakeTimeMinutes &&
-    day.habitScore === 0 &&
-    day.energyScore === 0
+    !d.wakeTimeMinutes &&
+    d.habitScore === 0 &&
+    d.energyScore === 0 &&
+    !Object.values(d.energy).some((v) => v > 0)
   ) {
     const ok = confirm(
       "Tälle päivälle ei ole habiteja, wakea tai energia-tapahtumia. Finalize silti?"
@@ -476,109 +638,53 @@ btnFinalizeDay.addEventListener("click", () => {
     if (!ok) return;
   }
 
+  // PR check
   let best = -Infinity;
   for (let i = 1; i <= 90; i++) {
     if (i === data.currentDay) continue;
-    const s = data.days[i].totalScore || 0;
-    if (s > best) best = s;
+    best = Math.max(best, data.days[i].totalScore);
   }
-  day.pr = day.totalScore > best && day.totalScore > 0;
+  d.pr = d.totalScore > best && d.totalScore > 0;
 
-  day.locked = true;
+  // Ghost Future update
+  const delta = computeGhostDelta(d);
+  data.ghostDistance += delta;
+  if (data.ghostDistance < 0.1) data.ghostDistance = 0.1;
+  if (data.ghostDistance > 2.0) data.ghostDistance = 2.0;
+  d.ghostDelta = delta;
+  d.ghostDistanceAfter = data.ghostDistance;
 
+  d.locked = true;
+
+  // Streak
   if (data.lastCompletedDay === data.currentDay - 1) {
-    data.streak = (data.streak || 0) + 1;
+    data.streak++;
   } else {
     data.streak = 1;
   }
   data.lastCompletedDay = data.currentDay;
 
-  if (data.currentDay < 90) {
-    data.currentDay++;
-  }
+  // Nicotine clean streak
+  if ((d.energy.nicotine || 0) === 0) data.nicCleanStreak++;
+  else data.nicCleanStreak = 0;
+
+  // Siirry seuraavaan päivään
+  if (data.currentDay < 90) data.currentDay++;
 
   save();
   updateAll();
 });
 
-// Modal close
-dayModalBackdrop.addEventListener("click", (e) => {
-  if (e.target === dayModalBackdrop) {
-    dayModalBackdrop.style.display = "none";
-  }
-});
-modalCloseBtn.addEventListener("click", () => {
-  dayModalBackdrop.style.display = "none";
+// RESET
+btnReset.addEventListener("click", () => {
+  if (!confirm("Reset Bloodliner 90? Kaikki data poistetaan.")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
 });
 
-/* DAY CLICK */
-
-function handleDayClick(dayNumber) {
-  data.currentDay = dayNumber;
-  save();
-  updateAll();
-  openDayModal(dayNumber);
-}
-
-function openDayModal(dayNumber) {
-  const day = data.days[dayNumber];
-  modalDayTitle.textContent = `Päivä ${dayNumber}`;
-  modalWakeTime.textContent = formatTimeFromMinutes(day.wakeTimeMinutes);
-  modalWakeScore.textContent = day.wakeScore.toString();
-  modalHabitScore.textContent = day.habitScore.toString();
-  modalEnergyScore.textContent = day.energyScore.toString();
-  modalTotalScore.textContent = day.totalScore.toString();
-  modalMoneySpent.textContent = day.moneySpent.toFixed(2);
-  modalTomorrowEnergy.textContent =
-    day.tomorrowEnergy == null ? "—" : `${day.tomorrowEnergy}`;
-
-  modalHabitsList.innerHTML = "";
-  const habitsDone = Object.entries(day.habitsDone || {})
-    .filter(([_, done]) => done)
-    .map(([habit]) => habit);
-
-  if (habitsDone.length === 0) {
-    const li = document.createElement("li");
-    li.textContent = "Ei merkittyjä habiteja.";
-    modalHabitsList.appendChild(li);
-  } else {
-    habitsDone.forEach((h) => {
-      const li = document.createElement("li");
-      li.textContent = h;
-      modalHabitsList.appendChild(li);
-    });
-  }
-
-  modalEnergyList.innerHTML = "";
-  const energy = day.energy || {};
-  const labels = {
-    nicotine: "Nicotine 🚬",
-    coffee: "Coffee ☕",
-    water: "Water 💧",
-    protein: "Protein 🥫",
-    meal: "Meal 🍽️",
-    shots: "Shot / Huono 🧊"
-  };
-  let anyEnergy = false;
-  for (const key of Object.keys(labels)) {
-    const count = energy[key] || 0;
-    if (count > 0) {
-      anyEnergy = true;
-      const li = document.createElement("li");
-      li.textContent = `${labels[key]}: ${count}`;
-      modalEnergyList.appendChild(li);
-    }
-  }
-  if (!anyEnergy) {
-    const li = document.createElement("li");
-    li.textContent = "Ei energia-/kulutustapahtumia.";
-    modalEnergyList.appendChild(li);
-  }
-
-  dayModalBackdrop.style.display = "flex";
-}
-
-/* UPDATE ALL */
+/* ------------------------------------------------------
+   UPDATE ALL
+------------------------------------------------------ */
 
 function updateAll() {
   for (let i = 1; i <= 90; i++) {
