@@ -28,6 +28,14 @@
         <span>STREAK</span>
         <strong id="hud-streak">0</strong>
       </div>
+      <div class="hud-chip">
+        <span>NIC CLEAN</span>
+        <strong id="hud-nic-streak">0</strong>
+      </div>
+      <div class="hud-chip">
+        <span>GHOST</span>
+        <strong id="hud-ghost">1.00 AU</strong>
+      </div>
       <div class="hud-chip small">
         <span>SCORE YHT.</span>
         <strong id="hud-total-score">0</strong>
@@ -49,7 +57,8 @@
       <h2>90 DAY BOARD</h2>
       <p class="sub-hint">
         Klikkaa päivää nähdäksesi statsit. Väri = päivän kokonais Score.
-        ✓ = vähintään yksi habit tehty sinä päivänä.
+        ✓ = vähintään yksi habit tehty sinä päivänä. Vihreä hehku = nikotiinivapaa.
+        Reunaväri kertoo, tuliko Ghost Future lähemmäs vai kauemmas.
       </p>
       <div id="day-grid"></div>
     </section>
@@ -61,11 +70,12 @@
       <section id="wake-card" class="card">
         <h2>PRIME WAKE</h2>
         <p class="sub-hint">
-          A+ versio: yksi napin painallus aamulla. Bloodliner hoitaa loput.
+          A+ versio: yksi napin painallus aamulla. Tai syötä aika manuaalisesti.
           Oletus prime-ikkuna: 06:00–08:00.
         </p>
         <div class="wake-row">
           <button id="btn-wake-now" class="btn primary big">Heräsin nyt</button>
+          <button id="btn-wake-input" class="btn ghost big wake-time-btn">🕒</button>
           <div class="wake-info">
             <div><span>Aamun aika:</span> <strong id="wake-time-label">—</strong></div>
             <div><span>Wake Score:</span> <strong id="wake-score-label">0</strong></div>
@@ -188,11 +198,25 @@
         <p><span>Total Score:</span> <strong id="modal-total-score">0</strong></p>
         <p><span>Money spent (€):</span> <strong id="modal-money-spent">0.00</strong></p>
         <p><span>Tomorrow energy (pred.):</span> <strong id="modal-tomorrow-energy">—</strong></p>
+        <p><span>Ghost distance:</span> <strong id="modal-ghost-distance">—</strong></p>
+        <p><span>Ghost shift:</span> <strong id="modal-ghost-shift">—</strong></p>
         <p><span>Habits suoritettu:</span></p>
         <ul id="modal-habits"></ul>
         <p><span>Energy events:</span></p>
         <ul id="modal-energy-list"></ul>
       </section>
+    </div>
+  </div>
+
+  <!-- WAKE TIME INPUT MODAL -->
+  <div id="wake-modal-backdrop">
+    <div id="wake-modal">
+      <h3>Syötä heräämisaika</h3>
+      <input type="time" id="wake-time-input" />
+      <div class="wake-modal-buttons">
+        <button id="wake-modal-cancel" class="btn ghost small">Peruuta</button>
+        <button id="wake-modal-save" class="btn primary small">OK</button>
+      </div>
     </div>
   </div>
 
