@@ -46,21 +46,25 @@ body {
   align-items: center;
   gap: 6px;
 }
+
 .bloodliner-b {
   font-weight: 900;
   font-size: 24px;
   color: #ef4444;
   text-shadow: 0 0 22px rgba(248, 113, 113, 0.9);
 }
+
 .hud-logo-text {
   display: flex;
   flex-direction: column;
 }
+
 .bloodliner-title {
   font-size: 12px;
   letter-spacing: 0.18em;
   color: var(--text-main);
 }
+
 .bloodliner-sub {
   font-size: 9px;
   color: var(--text-muted);
@@ -70,7 +74,10 @@ body {
   display: flex;
   gap: 6px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
+
 .hud-chip {
   border-radius: 999px;
   padding: 4px 8px;
@@ -81,12 +88,15 @@ body {
   font-size: 9px;
   min-width: 58px;
 }
+
 .hud-chip.small {
   min-width: 76px;
 }
+
 .hud-chip span {
   color: var(--text-muted);
 }
+
 .hud-chip strong {
   font-size: 12px;
 }
@@ -137,6 +147,7 @@ body {
   box-shadow: 0 12px 28px rgba(3, 7, 18, 0.95);
   padding: 10px 12px;
 }
+
 .card h2 {
   margin: 0;
   font-size: 12px;
@@ -144,6 +155,7 @@ body {
   text-transform: uppercase;
   color: var(--accent-core);
 }
+
 .sub-hint {
   font-size: 10px;
   color: var(--text-muted);
@@ -151,10 +163,10 @@ body {
   margin-bottom: 8px;
 }
 
-/* GRID CARD */
+/* 90-DAY GRID */
 #day-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr)); /* mobiilissa 6 per rivi */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 4px;
 }
 
@@ -171,10 +183,12 @@ body {
   cursor: pointer;
   position: relative;
 }
+
 .day-cell span {
   position: relative;
   z-index: 2;
 }
+
 .day-cell::before {
   content: "";
   position: absolute;
@@ -184,24 +198,28 @@ body {
   z-index: 1;
 }
 
-/* Score intensity colors */
+/* Score intensity */
 .day-empty::before {
   background: radial-gradient(circle at center, #020617, #020617);
 }
+
 .day-low::before {
   background: radial-gradient(circle at center, rgba(56, 189, 248, 0.22), #020617);
 }
+
 .day-mid::before {
   background: radial-gradient(circle at center, rgba(34, 197, 94, 0.25), #020617);
 }
+
 .day-high::before {
   background: radial-gradient(circle at center, rgba(234, 179, 8, 0.3), #020617);
 }
+
 .day-elite::before {
   background: radial-gradient(circle at center, rgba(239, 68, 68, 0.35), #020617);
 }
 
-/* Habit indicator on day card */
+/* Habit checkmark */
 .day-cell.day-habits-done::after {
   content: "✓";
   position: absolute;
@@ -212,44 +230,67 @@ body {
   text-shadow: 0 0 6px rgba(34,197,94,0.8);
 }
 
+/* Nicotine CLEAN indicator (green glow) */
+.day-clean::before {
+  background: radial-gradient(circle at center, rgba(34,197,94,0.35), #020617);
+}
+
+/* Ghost movement indicator */
+.day-ghost-closer {
+  box-shadow: 0 0 0 1px rgba(34,197,94,0.7);
+}
+
+.day-ghost-farther {
+  box-shadow: 0 0 0 1px rgba(248,113,113,0.7);
+}
+
 .day-cell.current {
   box-shadow: 0 0 0 1px #f97316, 0 0 14px rgba(249, 115, 22, 0.8);
 }
+
 .day-cell.pr {
   border-color: #facc15;
   box-shadow: 0 0 12px rgba(250, 204, 21, 0.8);
 }
 
-/* STACK COLUMN (wake + energy + habits + summary) */
+/* STACK COLUMN */
 #stack-column {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* WAKE CARD */
+/* WAKE */
 .wake-row {
   display: flex;
   gap: 8px;
   align-items: center;
 }
+
 .wake-info {
   font-size: 11px;
 }
+
 .wake-info span {
   color: var(--text-muted);
 }
-.wake-info strong {
-  display: inline-block;
+
+.wake-time-btn {
+  min-width: 38px;
+  padding-inline: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* ENERGY CARD */
+/* ENERGY */
 #energy-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   margin-bottom: 8px;
 }
+
 .energy-btn {
   border-radius: 10px;
   border: 1px solid var(--border);
@@ -262,26 +303,32 @@ body {
   font-size: 11px;
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.9);
 }
+
 .energy-btn:active {
   transform: translateY(1px) scale(0.97);
 }
+
 .energy-btn .emoji {
   font-size: 18px;
 }
+
 .energy-btn .label {
   flex: 1;
   margin-left: 6px;
 }
+
 .energy-btn .count {
   font-size: 12px;
   font-weight: 600;
   color: var(--accent-core);
 }
 
+/* ENERGY STATS */
 #energy-stats {
   display: flex;
   gap: 6px;
 }
+
 .qstat {
   flex: 1;
   border-radius: 10px;
@@ -290,9 +337,11 @@ body {
   padding: 4px 6px;
   font-size: 10px;
 }
+
 .qstat span {
   color: var(--text-muted);
 }
+
 .qstat strong {
   display: block;
   font-size: 13px;
@@ -304,6 +353,7 @@ body {
   gap: 6px;
   margin-bottom: 8px;
 }
+
 #habit-input {
   flex: 1;
   padding: 6px 8px;
@@ -313,11 +363,13 @@ body {
   color: var(--text-main);
   font-size: 12px;
 }
+
 #habit-list {
   list-style: none;
   padding-left: 0;
   margin: 0;
 }
+
 .habit-item {
   display: flex;
   align-items: center;
@@ -326,20 +378,26 @@ body {
   border-bottom: 1px solid #111827;
   font-size: 12px;
 }
+
 .habit-left {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.habit-name {
-  max-width: 200px;
-}
+
 .habit-delete {
   border: none;
   background: transparent;
   color: var(--accent-bad);
   cursor: pointer;
   font-size: 14px;
+}
+
+/* SUMMARY */
+#summary-stats {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 /* BUTTONS */
@@ -351,40 +409,40 @@ body {
   font-size: 12px;
   font-weight: 600;
 }
+
 .btn.primary {
   background: linear-gradient(135deg, var(--accent-strong), #16a34a);
   color: #020617;
 }
+
 .btn.ghost {
   background: transparent;
   color: var(--text-main);
   border: 1px solid var(--border);
 }
+
 .btn.danger {
   background: linear-gradient(135deg, #ef4444, #b91c1c);
   color: #f9fafb;
 }
+
 .btn.tiny {
   padding: 4px 8px;
   font-size: 10px;
 }
+
 .btn.small {
   padding: 4px 10px;
   font-size: 11px;
 }
+
 .btn.fullwidth {
   width: 100%;
 }
+
 .btn.big {
   padding: 10px 14px;
   font-size: 13px;
-}
-
-/* SUMMARY CARD */
-#summary-stats {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
 }
 
 /* DAY MODAL */
@@ -398,6 +456,7 @@ body {
   padding: 10px;
   z-index: 80;
 }
+
 #day-modal {
   width: 100%;
   max-width: 380px;
@@ -409,36 +468,86 @@ body {
   border: 1px solid var(--border);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.95);
 }
+
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .modal-header h3 {
   margin: 0;
   font-size: 14px;
 }
+
 .modal-section {
   border-top: 1px solid var(--border);
   margin-top: 6px;
   padding-top: 6px;
   font-size: 12px;
 }
+
 .modal-section span {
   color: var(--text-muted);
 }
+
 #modal-habits,
 #modal-energy-list {
   list-style: none;
   padding-left: 0;
   margin: 4px 0 6px;
 }
+
 #modal-habits li,
 #modal-energy-list li {
   margin-bottom: 2px;
 }
 
-/* DESKTOP / ISOMPI NÄYTTÖ */
+/* WAKE TIME MODAL */
+#wake-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.9);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  z-index: 90;
+}
+
+#wake-modal {
+  width: 100%;
+  max-width: 320px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: radial-gradient(circle at top, #020617, #020617);
+  border: 1px solid var(--border);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.95);
+}
+
+#wake-modal h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+#wake-time-input {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #020617;
+  color: var(--text-main);
+  font-size: 13px;
+}
+
+.wake-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* DESKTOP LAYOUT */
 @media (min-width: 900px) {
   #layout {
     display: grid;
@@ -463,13 +572,10 @@ body {
   }
 }
 
+/* PHONE HUD FIX */
 @media (max-width: 520px) {
   #hud {
     flex-wrap: wrap;
     gap: 6px;
   }
-  #ticker-bar {
-    top: auto;
-  }
 }
-
