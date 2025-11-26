@@ -15,7 +15,7 @@
         <span class="bloodliner-b">B</span>
         <div class="hud-logo-text">
           <span class="bloodliner-title">BLOODLINER 90</span>
-          <span class="bloodliner-sub">HABITS • ENERGY • ECONOMY</span>
+          <span class="bloodliner-sub">HABITS • ENERGY • ECONOMY • GHOST</span>
         </div>
       </div>
     </div>
@@ -40,9 +40,15 @@
         <span>SCORE YHT.</span>
         <strong id="hud-total-score">0</strong>
       </div>
+      <button id="btn-tap-test" class="btn ghost tiny">Tap Test</button>
       <button id="btn-reset" class="btn danger tiny">Reset</button>
     </div>
   </header>
+
+  <!-- HOLOGRAMMI-LANKA (elämän viiva) -->
+  <div id="holo-wrapper">
+    <div id="hologram-line"></div>
+  </div>
 
   <!-- ESPN-LIVE TICKER -->
   <div id="ticker-bar">
@@ -56,22 +62,21 @@
     <section id="grid-card" class="card">
       <h2>90 DAY BOARD</h2>
       <p class="sub-hint">
-        Klikkaa päivää nähdäksesi statsit. Väri = päivän kokonais Score.
-        ✓ = vähintään yksi habit tehty sinä päivänä. Vihreä hehku = nikotiinivapaa.
-        Reunaväri kertoo, tuliko Ghost Future lähemmäs vai kauemmas.
+        Klikkaa päivää nähdäksesi statsit. Väri = päivän Score. ✓ = vähintään yksi habit suoritettu.
+        Vihreä hehku = nikotiiniton. Reunan väri näyttää, tuliko Ghost lähemmäs vai kauemmas.
       </p>
       <div id="day-grid"></div>
     </section>
 
-    <!-- WAKE + ENERGY + HABITS + SUMMARY yhtenä mobiilikolumnina -->
+    <!-- WAKE + ENERGY + HABITS + SUMMARY -->
     <section id="stack-column">
 
       <!-- WAKE CARD -->
       <section id="wake-card" class="card">
         <h2>PRIME WAKE</h2>
         <p class="sub-hint">
-          A+ versio: yksi napin painallus aamulla. Tai syötä aika manuaalisesti.
-          Oletus prime-ikkuna: 06:00–08:00.
+          A+ wake: yksi napin painallus aamulla tai syötä aika manuaalisesti.
+          Prime-ikkuna: 06:00–08:00.
         </p>
         <div class="wake-row">
           <button id="btn-wake-now" class="btn primary big">Heräsin nyt</button>
@@ -139,19 +144,17 @@
         </div>
       </section>
 
-      <!-- HABITS CARD -->
+      <!-- HABIT ORBITS -->
       <section id="habits-card" class="card">
-        <h2>HABITS</h2>
+        <h2>HABIT ORBITS</h2>
         <p class="sub-hint">
-          Lisää omat verilinjan rutiinit. Ruksaa ne, jotka suoritit tänään.
+          Nämä ovat sinun elämän pää-orbitit. Double-tap orbia kun olet toteuttanut sen tänään.
+          Orb täyttyy 90 päivän matkalla.
         </p>
-
-        <div id="habit-add-row">
-          <input id="habit-input" type="text" placeholder="Uusi habit (esim. Treeni)" />
-          <button id="habit-add-btn" class="btn primary small">Lisää</button>
-        </div>
-
-        <ul id="habit-list"></ul>
+        <div id="habit-orbit-row"></div>
+        <p class="sub-hint">
+          Orbits (default): Sovereign Mind • Warpath Discipline • Prime Bodywork • High-Value Creation • Soul Alignment
+        </p>
       </section>
 
       <!-- DAY SUMMARY + FINALIZE -->
@@ -195,6 +198,7 @@
         <p><span>Wake Score:</span> <strong id="modal-wake-score">0</strong></p>
         <p><span>Habits Score:</span> <strong id="modal-habit-score">0</strong></p>
         <p><span>Energy Score:</span> <strong id="modal-energy-score">0</strong></p>
+        <p><span>Tap Test Score:</span> <strong id="modal-tap-test">0</strong></p>
         <p><span>Total Score:</span> <strong id="modal-total-score">0</strong></p>
         <p><span>Money spent (€):</span> <strong id="modal-money-spent">0.00</strong></p>
         <p><span>Tomorrow energy (pred.):</span> <strong id="modal-tomorrow-energy">—</strong></p>
