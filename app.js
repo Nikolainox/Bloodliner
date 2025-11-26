@@ -1,14 +1,8 @@
 /* ------------------------------------------------------
-   BLOODLINER 90 • GHOST FUTURE + WAKE TIME INPUT
-   - 90-day habit + energy + economy scoreboard
-   - A+ Prime Wake (nappi + manuaalinen aika)
-   - Nicotine Reduction Line (clean streak)
-   - Ghost Future Engine (HUD + ticker + grid + modal)
-   - Bayes-tyylinen huomisen energian ennuste
-   - LocalStorage only
+   BLOODLINER 90 • GHOST FUTURE + WAKE + HOLOGRAM + HABIT ORBITS + TAP TEST
 ------------------------------------------------------ */
 
-const STORAGE_KEY = "bloodliner_v3_ghost_wakeinput";
+const STORAGE_KEY = "bloodliner_v3_orbits_tap";
 
 // PRIME WAKE WINDOW (06:00–08:00)
 const PRIME_START_MIN = 6 * 60;
@@ -34,12 +28,13 @@ const MONEY_WEIGHTS = {
   shots: 5.0
 };
 
-// DEFAULT HABITS
+// FIXED HABITS – greatness orbits
 const DEFAULT_HABITS = [
-  "Treeni",
-  "Deep Work",
-  "Päiväkirja",
-  "Ei some-scrollia"
+  "Sovereign Mind",
+  "Warpath Discipline",
+  "Prime Bodywork",
+  "High-Value Creation",
+  "Soul Alignment"
 ];
 
 // INITIAL DATA
@@ -49,7 +44,7 @@ let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
   lastCompletedDay: null,
   streak: 0,
   nicCleanStreak: 0,
-  ghostDistance: 1.0, // AU (astronomical-style unit)
+  ghostDistance: 1.0, // AU
   habits: DEFAULT_HABITS
 };
 
@@ -57,7 +52,9 @@ let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
 for (let i = 1; i <= 90; i++) {
   if (!data.days[i]) data.days[i] = createEmptyDay(i);
 }
-if (!Array.isArray(data.habits)) data.habits = DEFAULT_HABITS;
+if (!Array.isArray(data.habits) || data.habits.length === 0) {
+  data.habits = DEFAULT_HABITS;
+}
 if (typeof data.nicCleanStreak !== "number") data.nicCleanStreak = 0;
 if (typeof data.ghostDistance !== "number") data.ghostDistance = 1.0;
 
@@ -84,11 +81,15 @@ function createEmptyDay(n) {
     energyScore: 0,
     habitsDone: {},
     habitScore: 0,
+    tap: {
+      morningCount: null,
+      eveningCount: null
+    },
+    tapScore: 0,
     totalScore: 0,
     tomorrowEnergy: null,
     locked: false,
     pr: false,
-    // Ghost Future data for this day
     ghostDelta: 0,
     ghostDistanceAfter: null
   };
@@ -133,6 +134,17 @@ function calculateHabitScore(map) {
   return Object.values(map).filter(Boolean).length * 10;
 }
 
+function calculateTapScore(tap) {
+  if (!tap) return 0;
+  const m = tap.morningCount || 0;
+  const e = tap.eveningCount || 0;
+  const raw = m + e;
+  if (raw === 0) return 0;
+  // skaalataan suunnilleen 0–20 välille
+  const capped = Math.min(raw, 60);
+  return Math.round(capped / 3);
+}
+
 function calculateTomorrowEnergy(totalScore) {
   let v = 50 + totalScore / 2;
   if (v < 0) v = 0;
@@ -146,27 +158,25 @@ function recomputeDay(n) {
   d.energyScore = calculateEnergyScore(d.energy);
   d.moneySpent = calculateMoney(d.energy);
   d.habitScore = calculateHabitScore(d.habitsDone);
-  d.totalScore = d.wakeScore + d.energyScore + d.habitScore;
+  d.tapScore = calculateTapScore(d.tap);
+  d.totalScore = d.wakeScore + d.energyScore + d.habitScore + d.tapScore;
   d.tomorrowEnergy = calculateTomorrowEnergy(d.totalScore);
 }
 
 /**
  * GHOST FUTURE ENGINE:
- * Laskee kuinka paljon ghost-liikettä tapahtuu tänä päivänä.
- * Palauttaa delta AU-yksiköissä:
- *  - negatiivinen = ghost tulee lähemmäs
- *  - positiivinen = ghost loittonee
+ *  negatiivinen delta = ghost tulee lähemmäs
+ *  positiivinen delta = ghost loittonee
  */
 function computeGhostDelta(day) {
   let normalized = day.totalScore / 100;
   if (normalized > 1) normalized = 1;
   if (normalized < -1) normalized = -1;
-  let delta = -normalized * 0.04; // hyvät pisteet -> lähemmäs (negatiivinen)
+  let delta = -normalized * 0.04;
 
   // Nikotiini rankaisee
   delta += (day.energy.nicotine || 0) * 0.04;
-
-  // Shots vielä rankempi
+  // Shots rankaisee enemmän
   delta += (day.energy.shots || 0) * 0.06;
 
   // Tyhjä päivä -> ei liikettä
@@ -190,8 +200,13 @@ const hudNicStreak = document.getElementById("hud-nic-streak");
 const hudGhost = document.getElementById("hud-ghost");
 const hudTotalScore = document.getElementById("hud-total-score");
 
+const holoLine = document.getElementById("hologram-line");
+
 const dayGrid = document.getElementById("day-grid");
 const btnReset = document.getElementById("btn-reset");
+
+// Tap Test
+const btnTapTest = document.getElementById("btn-tap-test");
 
 // Wake
 const btnWakeNow = document.getElementById("btn-wake-now");
@@ -201,7 +216,6 @@ const wakeScoreLabel = document.getElementById("wake-score-label");
 
 // Wake modal
 const wakeModalBackdrop = document.getElementById("wake-modal-backdrop");
-const wakeModal = document.getElementById("wake-modal");
 const wakeTimeInput = document.getElementById("wake-time-input");
 const wakeModalCancel = document.getElementById("wake-modal-cancel");
 const wakeModalSave = document.getElementById("wake-modal-save");
@@ -219,10 +233,8 @@ const energyScoreLabel = document.getElementById("energy-score-label");
 const moneySpentLabel = document.getElementById("money-spent-label");
 const tomorrowEnergyLabel = document.getElementById("tomorrow-energy-label");
 
-// Habits
-const habitInput = document.getElementById("habit-input");
-const habitAddBtn = document.getElementById("habit-add-btn");
-const habitListEl = document.getElementById("habit-list");
+// Habits Orbits
+const habitOrbitRow = document.getElementById("habit-orbit-row");
 
 // Summary
 const habitScoreLabel = document.getElementById("habit-score-label");
@@ -237,6 +249,7 @@ const modalWakeTime = document.getElementById("modal-wake-time");
 const modalWakeScore = document.getElementById("modal-wake-score");
 const modalHabitScore = document.getElementById("modal-habit-score");
 const modalEnergyScore = document.getElementById("modal-energy-score");
+const modalTapTest = document.getElementById("modal-tap-test");
 const modalTotalScore = document.getElementById("modal-total-score");
 const modalMoneySpent = document.getElementById("modal-money-spent");
 const modalTomorrowEnergy = document.getElementById("modal-tomorrow-energy");
@@ -248,6 +261,13 @@ const modalClose = document.getElementById("modal-close");
 
 // Ticker
 const tickerInner = document.getElementById("ticker-inner");
+
+/* Tap Test State */
+let tapTestActive = false;
+let tapTestStart = 0;
+let tapTestCount = 0;
+let tapTestTimerId = null;
+let tapTestSlot = null; // "morning" or "evening"
 
 /* ------------------------------------------------------
    RENDERING
@@ -334,61 +354,99 @@ function renderCurrentDay() {
     d.tomorrowEnergy == null ? "—" : d.tomorrowEnergy;
 
   // Habits
-  renderHabitList();
+  renderHabitOrbits();
   habitScoreLabel.textContent = d.habitScore;
   summaryWakeScoreLabel.textContent = d.wakeScore;
   totalScoreLabel.textContent = d.totalScore;
 }
 
-function renderHabitList() {
+/* ------------------------------------------------------
+   HABIT ORBITS
+------------------------------------------------------ */
+
+let lastHabitTap = { name: null, time: 0 };
+
+function computeHabitCompletionRatio(habitName) {
+  let doneCount = 0;
+  for (let i = 1; i <= 90; i++) {
+    if (data.days[i].habitsDone && data.days[i].habitsDone[habitName]) {
+      doneCount++;
+    }
+  }
+  return doneCount / 90;
+}
+
+function renderHabitOrbits() {
   const d = data.days[data.currentDay];
-  habitListEl.innerHTML = "";
+  habitOrbitRow.innerHTML = "";
 
   data.habits.forEach((habit) => {
-    const li = document.createElement("li");
-    li.className = "habit-item";
+    const orb = document.createElement("div");
+    orb.className = "habit-orb";
 
-    const left = document.createElement("div");
-    left.className = "habit-left";
+    const circle = document.createElement("div");
+    circle.className = "habit-circle";
 
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = !!d.habitsDone[habit];
-    cb.addEventListener("change", () => {
+    const labelSpan = document.createElement("span");
+    labelSpan.textContent = d.habitsDone[habit] ? "✓" : "";
+    circle.appendChild(labelSpan);
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "habit-orb-label";
+    nameEl.textContent = habit;
+
+    const ratio = computeHabitCompletionRatio(habit);
+    const deg = Math.round(ratio * 360);
+    circle.style.setProperty("--progress", `${deg}deg`);
+
+    const percentEl = document.createElement("div");
+    percentEl.className = "habit-orb-percent";
+    percentEl.textContent = `${Math.round(ratio * 100)}%`;
+
+    if (d.habitsDone[habit]) {
+      orb.classList.add("done");
+    }
+
+    orb.appendChild(circle);
+    orb.appendChild(nameEl);
+    orb.appendChild(percentEl);
+
+    orb.addEventListener("click", () => {
       if (d.locked) {
-        cb.checked = !cb.checked;
         alert("Päivä on lukittu.");
         return;
       }
-      d.habitsDone[habit] = cb.checked;
-      recomputeDay(data.currentDay);
-      updateAll();
-    });
-
-    const span = document.createElement("span");
-    span.textContent = habit;
-
-    left.appendChild(cb);
-    left.appendChild(span);
-
-    const delBtn = document.createElement("button");
-    delBtn.className = "habit-delete";
-    delBtn.textContent = "✕";
-    delBtn.addEventListener("click", () => {
-      if (!confirm("Poistetaanko habit kaikilta päiviltä?")) return;
-      data.habits = data.habits.filter((h) => h !== habit);
-      for (let i = 1; i <= 90; i++) {
-        delete data.days[i].habitsDone[habit];
-        recomputeDay(i);
+      const now = Date.now();
+      if (lastHabitTap.name === habit && now - lastHabitTap.time < 350) {
+        // double tap → toggle
+        const newVal = !d.habitsDone[habit];
+        d.habitsDone[habit] = newVal;
+        recomputeDay(data.currentDay);
+        updateAll();
+        habitXpBurst(circle, newVal ? "+10" : "0");
+        lastHabitTap = { name: null, time: 0 };
+      } else {
+        lastHabitTap = { name: habit, time: now };
+        circle.classList.remove("pulse-hit");
+        void circle.offsetWidth;
+        circle.classList.add("pulse-hit");
       }
-      save();
-      updateAll();
     });
 
-    li.appendChild(left);
-    li.appendChild(delBtn);
-    habitListEl.appendChild(li);
+    habitOrbitRow.appendChild(orb);
   });
+}
+
+function habitXpBurst(container, label) {
+  const span = document.createElement("div");
+  span.className = "xp-burst";
+  span.textContent = label || "+10";
+  span.style.left = "50%";
+  span.style.top = "50%";
+  container.appendChild(span);
+  setTimeout(() => {
+    if (span.parentNode) span.parentNode.removeChild(span);
+  }, 600);
 }
 
 /* ------------------------------------------------------
@@ -403,6 +461,7 @@ function updateTicker() {
     const used =
       d.habitScore !== 0 ||
       d.energyScore !== 0 ||
+      d.tapScore !== 0 ||
       d.wakeTimeMinutes != null ||
       Object.values(d.energy).some((v) => v > 0);
 
@@ -413,6 +472,9 @@ function updateTicker() {
     s += ` • €${d.moneySpent.toFixed(2)}`;
     if ((d.energy.nicotine || 0) === 0) s += " • CLEAN";
     if (d.pr) s += " • PR🔥";
+    if (typeof d.tapScore === "number" && d.tapScore > 0) {
+      s += ` • TAP ${d.tapScore}`;
+    }
     if (typeof d.ghostDistanceAfter === "number") {
       s += ` • GHOST ${d.ghostDistanceAfter.toFixed(2)} AU`;
     }
@@ -431,6 +493,82 @@ function updateTicker() {
 }
 
 /* ------------------------------------------------------
+   HOLOGRAMMI-LANKA
+------------------------------------------------------ */
+
+function getLastFinalizedDay() {
+  let last = null;
+  for (let i = 1; i <= 90; i++) {
+    if (data.days[i].locked) last = data.days[i];
+  }
+  return last;
+}
+
+function updateHologramLine() {
+  if (!holoLine) return;
+
+  const lastDay = getLastFinalizedDay();
+  if (!lastDay) {
+    holoLine.style.width = "80px";
+    holoLine.style.opacity = "0.25";
+    holoLine.style.transform = "rotate(0deg)";
+    holoLine.classList.remove("flash");
+    return;
+  }
+
+  let momentum =
+    lastDay.totalScore +
+    ((lastDay.energy.nicotine || 0) === 0 ? 10 : -5);
+  if (momentum < -50) momentum = -50;
+  if (momentum > 150) momentum = 150;
+
+  const baseWidth = 80;
+  const width = baseWidth + momentum * 0.6;
+  const delta = lastDay.ghostDelta || 0;
+
+  let angle = delta * -80;
+  if (angle > 25) angle = 25;
+  if (angle < -25) angle = -25;
+
+  const finalWidth = Math.max(40, width);
+
+  holoLine.style.width = `${finalWidth}px`;
+  holoLine.style.opacity = "0.9";
+  holoLine.style.transform = `rotate(${angle}deg)`;
+}
+
+/* Dopamine flash for hologram */
+function flashHologram() {
+  if (!holoLine) return;
+  holoLine.classList.add("flash");
+  setTimeout(() => holoLine.classList.remove("flash"), 350);
+}
+
+/* HUD flash on finalize */
+function flashHUD() {
+  const chips = document.querySelectorAll(".hud-chip");
+  chips.forEach((c) => c.classList.add("flash"));
+  setTimeout(() => chips.forEach((c) => c.classList.remove("flash")), 300);
+}
+
+/* XP burst on energy button */
+function energyXpBurst(btn, label) {
+  const span = document.createElement("div");
+  span.className = "xp-burst";
+  span.textContent = label || "+1";
+  span.style.left = "50%";
+  span.style.top = "45%";
+  btn.appendChild(span);
+  setTimeout(() => {
+    if (span.parentNode) span.parentNode.removeChild(span);
+  }, 600);
+
+  btn.classList.remove("pulse-hit");
+  void btn.offsetWidth;
+  btn.classList.add("pulse-hit");
+}
+
+/* ------------------------------------------------------
    DAY MODAL
 ------------------------------------------------------ */
 
@@ -441,6 +579,7 @@ function openDay(n) {
   renderGrid();
   renderCurrentDay();
   updateTicker();
+  updateHologramLine();
 
   const d = data.days[n];
 
@@ -449,6 +588,7 @@ function openDay(n) {
   modalWakeScore.textContent = d.wakeScore;
   modalHabitScore.textContent = d.habitScore;
   modalEnergyScore.textContent = d.energyScore;
+  modalTapTest.textContent = d.tapScore || 0;
   modalTotalScore.textContent = d.totalScore;
   modalMoneySpent.textContent = d.moneySpent.toFixed(2);
   modalTomorrowEnergy.textContent =
@@ -526,7 +666,7 @@ btnWakeInput.addEventListener("click", () => {
     alert("Päivä on lukittu.");
     return;
   }
-  wakeTimeInput.value = ""; // tyhjäksi
+  wakeTimeInput.value = "";
   wakeModalBackdrop.style.display = "flex";
 });
 
@@ -575,7 +715,64 @@ wakeModalSave.addEventListener("click", () => {
 });
 
 /* ------------------------------------------------------
-   EVENTS
+   TAP TEST
+------------------------------------------------------ */
+
+btnTapTest.addEventListener("click", () => {
+  const d = data.days[data.currentDay];
+  if (d.locked) {
+    alert("Päivä on lukittu.");
+    return;
+  }
+
+  if (!tapTestActive) {
+    // päätä slotti: ensin aamu, sitten ilta
+    if (!d.tap) d.tap = { morningCount: null, eveningCount: null };
+    if (d.tap.morningCount == null) tapTestSlot = "morning";
+    else tapTestSlot = "evening";
+
+    tapTestActive = true;
+    tapTestStart = Date.now();
+    tapTestCount = 0;
+
+    btnTapTest.classList.add("tap-active");
+    btnTapTest.textContent = tapTestSlot === "morning" ? "Tap Aamu (3s)" : "Tap Ilta (3s)";
+
+    tapTestTimerId = setTimeout(() => {
+      endTapTest();
+    }, 3000);
+  } else {
+    // aktiivinen testi → klikkaus lasketaan
+    tapTestCount++;
+  }
+});
+
+function endTapTest() {
+  tapTestActive = false;
+  clearTimeout(tapTestTimerId);
+  tapTestTimerId = null;
+
+  const d = data.days[data.currentDay];
+  if (!d.tap) d.tap = { morningCount: null, eveningCount: null };
+
+  if (tapTestSlot === "morning") {
+    d.tap.morningCount = tapTestCount;
+  } else {
+    d.tap.eveningCount = tapTestCount;
+  }
+
+  recomputeDay(data.currentDay);
+  save();
+  updateAll();
+
+  btnTapTest.classList.remove("tap-active");
+  btnTapTest.textContent = "Tap Test";
+
+  tapTestSlot = null;
+}
+
+/* ------------------------------------------------------
+   EVENTS: WAKE + ENERGY + FINALIZE + RESET
 ------------------------------------------------------ */
 
 btnWakeNow.addEventListener("click", () => {
@@ -602,20 +799,16 @@ energyButtons.forEach((btn) => {
     d.energy[t]++;
     recomputeDay(data.currentDay);
     updateAll();
+    const labelMap = {
+      nicotine: "-1",
+      coffee: "+1",
+      water: "+1",
+      protein: "+1",
+      meal: "+3",
+      shots: "-10"
+    };
+    energyXpBurst(btn, labelMap[t] || "+1");
   });
-});
-
-habitAddBtn.addEventListener("click", () => {
-  const name = habitInput.value.trim();
-  if (!name) return;
-  if (data.habits.includes(name)) {
-    alert("Habit jo olemassa.");
-    return;
-  }
-  data.habits.push(name);
-  habitInput.value = "";
-  save();
-  updateAll();
 });
 
 btnFinalizeDay.addEventListener("click", () => {
@@ -625,15 +818,15 @@ btnFinalizeDay.addEventListener("click", () => {
     return;
   }
 
-  // Tyhjä päivä? Varmistus
   if (
     !d.wakeTimeMinutes &&
     d.habitScore === 0 &&
     d.energyScore === 0 &&
+    d.tapScore === 0 &&
     !Object.values(d.energy).some((v) => v > 0)
   ) {
     const ok = confirm(
-      "Tälle päivälle ei ole habiteja, wakea tai energia-tapahtumia. Finalize silti?"
+      "Tälle päivälle ei ole habiteja, wakea, tap testia tai energia-tapahtumia. Finalize silti?"
     );
     if (!ok) return;
   }
@@ -668,11 +861,12 @@ btnFinalizeDay.addEventListener("click", () => {
   if ((d.energy.nicotine || 0) === 0) data.nicCleanStreak++;
   else data.nicCleanStreak = 0;
 
-  // Siirry seuraavaan päivään
   if (data.currentDay < 90) data.currentDay++;
 
   save();
   updateAll();
+  flashHologram();
+  flashHUD();
 });
 
 // RESET
@@ -695,6 +889,7 @@ function updateAll() {
   renderGrid();
   renderCurrentDay();
   updateTicker();
+  updateHologramLine();
 }
 
 /* INIT */
