@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Bloodliner 90 • Habit & Energy Scoreboard</title>
+  <title>Bloodliner Prime Hub • Life x Body</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -14,8 +14,8 @@
       <div class="hud-logo">
         <span class="bloodliner-b">B</span>
         <div class="hud-logo-text">
-          <span class="bloodliner-title">BLOODLINER 90</span>
-          <span class="bloodliner-sub">HABITS • ENERGY • ECONOMY • GHOST</span>
+          <span class="bloodliner-title">BLOODLINER PRIME</span>
+          <span class="bloodliner-sub">LIFE • BODY • GHOST • 90 DAY SEASON</span>
         </div>
       </div>
     </div>
@@ -28,160 +28,105 @@
         <span>STREAK</span>
         <strong id="hud-streak">0</strong>
       </div>
-      <div class="hud-chip">
-        <span>NIC CLEAN</span>
-        <strong id="hud-nic-streak">0</strong>
+      <div class="hud-chip small">
+        <span>LIFE XP</span>
+        <strong id="hud-life-xp">0</strong>
+      </div>
+      <div class="hud-chip small">
+        <span>BODY XP</span>
+        <strong id="hud-body-xp">0</strong>
       </div>
       <div class="hud-chip">
         <span>GHOST</span>
         <strong id="hud-ghost">1.00 AU</strong>
       </div>
-      <div class="hud-chip small">
-        <span>SCORE YHT.</span>
-        <strong id="hud-total-score">0</strong>
-      </div>
-      <button id="btn-tap-test" class="btn ghost tiny">Tap Test</button>
       <button id="btn-reset" class="btn danger tiny">Reset</button>
     </div>
   </header>
 
-  <!-- HOLOGRAMMI-LANKA (elämän viiva) -->
+  <!-- GHOST HOLOGRAM LINE -->
   <div id="holo-wrapper">
     <div id="hologram-line"></div>
   </div>
 
-  <!-- ESPN-LIVE TICKER -->
+  <!-- ESPN/NETFLIX TICKER -->
   <div id="ticker-bar">
-    <div id="ticker-inner">BLOODLINER 90 • READY</div>
+    <div id="ticker-inner">BLOODLINER PRIME HUB • READY</div>
   </div>
 
   <!-- MAIN LAYOUT -->
   <main id="layout">
 
-    <!-- 90-DAY GRID -->
-    <section id="grid-card" class="card">
-      <h2>90 DAY BOARD</h2>
+    <!-- LIFE CORE ORBIT CAROUSEL -->
+    <section id="life-card" class="card">
+      <h2>LIFE CORE • ASCENSION ORBITS</h2>
       <p class="sub-hint">
-        Klikkaa päivää nähdäksesi statsit. Väri = päivän Score. ✓ = vähintään yksi habit suoritettu.
-        Vihreä hehku = nikotiiniton. Reunan väri näyttää, tuliko Ghost lähemmäs vai kauemmas.
+        Netflix-tyylinen karuselli. Nuolet tai swipe/klikkailu vaihtaa orbia. Double-tap isoa ympyrää, kun toteutit sen tänään.
       </p>
-      <div id="day-grid"></div>
+      <div class="orbit-row">
+        <button id="life-prev" class="orbit-nav-btn">‹</button>
+        <div class="orbit-main">
+          <div id="life-orbit-circle" class="orbit-circle">
+            <div class="orbit-inner">
+              <div id="life-orbit-name" class="orbit-name">Blade Focus</div>
+              <div id="life-orbit-today" class="orbit-today">Tänään: —</div>
+              <div id="life-orbit-xp" class="orbit-xp">XP: 0% (0/90)</div>
+            </div>
+          </div>
+        </div>
+        <button id="life-next" class="orbit-nav-btn">›</button>
+      </div>
+      <div id="life-orbit-tags" class="orbit-tags"></div>
     </section>
 
-    <!-- WAKE + ENERGY + HABITS + SUMMARY -->
-    <section id="stack-column">
-
-      <!-- WAKE CARD -->
-      <section id="wake-card" class="card">
-        <h2>PRIME WAKE</h2>
-        <p class="sub-hint">
-          A+ wake: yksi napin painallus aamulla tai syötä aika manuaalisesti.
-          Prime-ikkuna: 06:00–08:00.
-        </p>
-        <div class="wake-row">
-          <button id="btn-wake-now" class="btn primary big">Heräsin nyt</button>
-          <button id="btn-wake-input" class="btn ghost big wake-time-btn">🕒</button>
-          <div class="wake-info">
-            <div><span>Aamun aika:</span> <strong id="wake-time-label">—</strong></div>
-            <div><span>Wake Score:</span> <strong id="wake-score-label">0</strong></div>
+    <!-- BODY CORE ORBIT CAROUSEL -->
+    <section id="body-card" class="card">
+      <h2>BODY CORE • MUSCLE ORBITS</h2>
+      <p class="sub-hint">
+        Lihas-orbitit. Double-tap kun treenasit. Ghost-line näyttää oletko edellä vai perässä tulevaisuuden versiosta.
+      </p>
+      <div class="orbit-row">
+        <button id="body-prev" class="orbit-nav-btn">‹</button>
+        <div class="orbit-main">
+          <div id="body-orbit-circle" class="orbit-circle body">
+            <div class="orbit-inner">
+              <div id="body-orbit-name" class="orbit-name">Chest</div>
+              <div id="body-orbit-today" class="orbit-today">Tänään: —</div>
+              <div id="body-orbit-xp" class="orbit-xp">XP: 0% (0/90)</div>
+            </div>
           </div>
         </div>
-      </section>
+        <button id="body-next" class="orbit-nav-btn">›</button>
+      </div>
+      <div id="body-orbit-tags" class="orbit-tags"></div>
+    </section>
 
-      <!-- ENERGY CARD -->
-      <section id="energy-card" class="card">
-        <h2>ENERGY & ECONOMY</h2>
-        <p class="sub-hint">
-          Napauta nappia aina kun käytät. Bloodliner laskee energian ja rahan.
-        </p>
+    <!-- 90 DAY SEASON GRID + PREDICTIONS -->
+    <section id="season-card" class="card">
+      <h2>90 DAY SEASON • OVERVIEW</h2>
+      <p class="sub-hint">
+        Jokainen ruutu = päivä. Väri = päivän yhteisscore Life + Body. Klikkaa ruutua nähdäksesi tarkemmat statsit.
+      </p>
+      <div id="day-grid"></div>
 
-        <div id="energy-grid">
-          <button class="energy-btn" data-type="nicotine">
-            <span class="emoji">🚬</span>
-            <span class="label">Nicotine</span>
-            <span class="count" id="cnt-nicotine">0</span>
-          </button>
-          <button class="energy-btn" data-type="coffee">
-            <span class="emoji">☕</span>
-            <span class="label">Coffee</span>
-            <span class="count" id="cnt-coffee">0</span>
-          </button>
-          <button class="energy-btn" data-type="water">
-            <span class="emoji">💧</span>
-            <span class="label">Water</span>
-            <span class="count" id="cnt-water">0</span>
-          </button>
-          <button class="energy-btn" data-type="protein">
-            <span class="emoji">🥫</span>
-            <span class="label">Protein</span>
-            <span class="count" id="cnt-protein">0</span>
-          </button>
-          <button class="energy-btn" data-type="meal">
-            <span class="emoji">🍽️</span>
-            <span class="label">Meal</span>
-            <span class="count" id="cnt-meal">0</span>
-          </button>
-          <button class="energy-btn" data-type="shots">
-            <span class="emoji">🧊</span>
-            <span class="label">Shot / Huono</span>
-            <span class="count" id="cnt-shots">0</span>
-          </button>
+      <div id="predictions" class="predictions">
+        <div class="qstat">
+          <span>Life growth probability</span>
+          <strong id="pred-life">—</strong>
         </div>
-
-        <div id="energy-stats">
-          <div class="qstat">
-            <span>Päivän Energy Score</span>
-            <strong id="energy-score-label">0</strong>
-          </div>
-          <div class="qstat">
-            <span>Rahan käyttö (€)</span>
-            <strong id="money-spent-label">0.00</strong>
-          </div>
-          <div class="qstat">
-            <span>Huomisen energia (pred.)</span>
-            <strong id="tomorrow-energy-label">—</strong>
-          </div>
+        <div class="qstat">
+          <span>Body strength probability</span>
+          <strong id="pred-body">—</strong>
         </div>
-      </section>
-
-      <!-- HABIT ORBITS -->
-      <section id="habits-card" class="card">
-        <h2>HABIT ORBITS</h2>
-        <p class="sub-hint">
-          Nämä ovat sinun elämän pää-orbitit. Double-tap orbia kun olet toteuttanut sen tänään.
-          Orb täyttyy 90 päivän matkalla.
-        </p>
-        <div id="habit-orbit-row"></div>
-        <p class="sub-hint">
-          Orbits (default): Sovereign Mind • Warpath Discipline • Prime Bodywork • High-Value Creation • Soul Alignment
-        </p>
-      </section>
-
-      <!-- DAY SUMMARY + FINALIZE -->
-      <section id="summary-card" class="card">
-        <h2>TÄMÄ PÄIVÄ</h2>
-        <p class="sub-hint">Nopea yhteenveto päivästä.</p>
-
-        <div id="summary-stats">
-          <div class="qstat">
-            <span>Habits Score</span>
-            <strong id="habit-score-label">0</strong>
-          </div>
-          <div class="qstat">
-            <span>Wake Score</span>
-            <strong id="summary-wake-score-label">0</strong>
-          </div>
-          <div class="qstat">
-            <span>Total Score</span>
-            <strong id="total-score-label">0</strong>
-          </div>
+        <div class="qstat">
+          <span>Overall projection (90d)</span>
+          <strong id="pred-overall">—</strong>
         </div>
+      </div>
 
-        <button id="btn-finalize-day" class="btn primary fullwidth big">
-          Finalize Day • Lukitse ja väritä
-        </button>
-      </section>
-
+      <button id="btn-finalize-day" class="btn primary fullwidth big">
+        Finalize Day • Lukitse Life + Body
+      </button>
     </section>
 
   </main>
@@ -194,33 +139,16 @@
         <button id="modal-close" class="btn ghost tiny">Sulje</button>
       </div>
       <section class="modal-section">
-        <p><span>Wake time:</span> <strong id="modal-wake-time">—</strong></p>
-        <p><span>Wake Score:</span> <strong id="modal-wake-score">0</strong></p>
-        <p><span>Habits Score:</span> <strong id="modal-habit-score">0</strong></p>
-        <p><span>Energy Score:</span> <strong id="modal-energy-score">0</strong></p>
-        <p><span>Tap Test Score:</span> <strong id="modal-tap-test">0</strong></p>
+        <p><span>Life XP:</span> <strong id="modal-life-score">0</strong></p>
+        <p><span>Body XP:</span> <strong id="modal-body-score">0</strong></p>
         <p><span>Total Score:</span> <strong id="modal-total-score">0</strong></p>
-        <p><span>Money spent (€):</span> <strong id="modal-money-spent">0.00</strong></p>
-        <p><span>Tomorrow energy (pred.):</span> <strong id="modal-tomorrow-energy">—</strong></p>
+        <p><span>Life Orbits tehty:</span></p>
+        <ul id="modal-life-list"></ul>
+        <p><span>Body Orbits treenattu:</span></p>
+        <ul id="modal-body-list"></ul>
         <p><span>Ghost distance:</span> <strong id="modal-ghost-distance">—</strong></p>
         <p><span>Ghost shift:</span> <strong id="modal-ghost-shift">—</strong></p>
-        <p><span>Habits suoritettu:</span></p>
-        <ul id="modal-habits"></ul>
-        <p><span>Energy events:</span></p>
-        <ul id="modal-energy-list"></ul>
       </section>
-    </div>
-  </div>
-
-  <!-- WAKE TIME INPUT MODAL -->
-  <div id="wake-modal-backdrop">
-    <div id="wake-modal">
-      <h3>Syötä heräämisaika</h3>
-      <input type="time" id="wake-time-input" />
-      <div class="wake-modal-buttons">
-        <button id="wake-modal-cancel" class="btn ghost small">Peruuta</button>
-        <button id="wake-modal-save" class="btn primary small">OK</button>
-      </div>
     </div>
   </div>
 
