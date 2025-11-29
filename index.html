@@ -259,6 +259,39 @@
     </div>
   </div>
 
+  <!-- JARVIS AI HOLOGRAM OVERLAY -->
+  <div id="jarvis-overlay" aria-hidden="true">
+    <div id="jarvis-panel">
+      <div class="jarvis-frame">
+        <svg class="jarvis-svg" viewBox="0 0 120 140" aria-hidden="true">
+          <!-- Outer aura -->
+          <ellipse cx="60" cy="60" rx="46" ry="52" class="jarvis-aura" />
+          <!-- Head -->
+          <path d="M40 30 Q60 10 80 30 Q80 48 60 55 Q40 48 40 30 Z" class="jarvis-head" />
+          <!-- Face grid -->
+          <line x1="60" y1="18" x2="60" y2="54" class="jarvis-grid" />
+          <line x1="48" y1="25" x2="72" y2="25" class="jarvis-grid" />
+          <line x1="46" y1="32" x2="74" y2="32" class="jarvis-grid" />
+          <line x1="48" y1="39" x2="72" y2="39" class="jarvis-grid" />
+          <!-- Eyes -->
+          <rect x="50" y="34" width="6" height="2" class="jarvis-eye" />
+          <rect x="64" y="34" width="6" height="2" class="jarvis-eye" />
+          <!-- Torso -->
+          <path d="M38 60 L82 60 L90 94 L30 94 Z" class="jarvis-torso" />
+          <!-- Shoulder lines -->
+          <line x1="38" y1="60" x2="22" y2="82" class="jarvis-shoulder" />
+          <line x1="82" y1="60" x2="98" y2="82" class="jarvis-shoulder" />
+        </svg>
+        <div class="jarvis-scan-line"></div>
+      </div>
+      <div class="jarvis-text">
+        <div id="jarvis-title">JARVIS PROTOCOL</div>
+        <div id="jarvis-main"></div>
+        <div id="jarvis-sub"></div>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
