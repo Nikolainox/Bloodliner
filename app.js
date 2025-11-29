@@ -1,27 +1,26 @@
 /* ------------------------------------------------------
-   BLOODLINER PRIME HUB • LIFE x BODY x GHOST
-   Netflix carousels + Ghost line + Bayesian/MonteCarlo-style projections
+   BLOODLINER PRIME HUB • FINAL LAUNCH BUILD
+   Life x Body x Ghost x OmniScore
+   - 6 Life-orbits (media-mystic)
+   - 10 Body-orbits
+   - 90 day grid
+   - Ghost line
+   - OmniScore (0–1000)
 ------------------------------------------------------ */
 
-const STORAGE_KEY = "bloodliner_prime_hub_v1";
+const STORAGE_KEY = "bloodliner_prime_hub_v2";
 
-// Life orbits (12) – menestyjän samurai-alueet
+/* LIFE ORBITS – 6 HABITS OF ASCENSION */
 const LIFE_ORBITS = [
-  "Blade Focus",
-  "Iron Discipline",
-  "Warrior Recovery",
-  "Strategic Life Moves",
-  "Spirit Expansion",
-  "Income Mastery",
-  "Creative Forge",
-  "Social Presence",
-  "Love & Bonding",
-  "Life Administration",
-  "Minimalism & Purity",
-  "High-Value Self"
+  "Mindforge Ritual",
+  "Discipline Engine",
+  "Aura Craft",
+  "Wealth Sequence",
+  "Creative Arc",
+  "Spirit Core"
 ];
 
-// Body orbits (10) – lihasryhmät
+/* BODY ORBITS – MUSCLE SET */
 const BODY_ORBITS = [
   "Chest",
   "Back",
@@ -35,16 +34,19 @@ const BODY_ORBITS = [
   "Cardio Engine"
 ];
 
-// INITIAL DATA
+/* ------------------------------------------------------
+   STATE INIT
+------------------------------------------------------ */
+
 let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
   days: {},
   currentDay: 1,
   lastCompletedDay: null,
   streak: 0,
-  ghostDistance: 1.0 // AU
+  ghostDistance: 1.0
 };
 
-// init 90 days
+// init 90 days if missing
 for (let i = 1; i <= 90; i++) {
   if (!data.days[i]) data.days[i] = createEmptyDay(i);
 }
@@ -56,9 +58,9 @@ save();
    HELPERS
 ------------------------------------------------------ */
 
-function createEmptyDay(n) {
+function createEmptyDay(dayNumber) {
   return {
-    dayNumber: n,
+    dayNumber,
     lifeDone: {},   // { orbitName: true }
     bodyDone: {},   // { orbitName: true }
     lifeScore: 0,
@@ -75,6 +77,10 @@ function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
+function clamp(v, min, max) {
+  return Math.min(max, Math.max(min, v));
+}
+
 function recomputeDay(n) {
   const d = data.days[n];
   d.lifeScore = Object.values(d.lifeDone).filter(Boolean).length * 10;
@@ -82,11 +88,12 @@ function recomputeDay(n) {
   d.totalScore = d.lifeScore + d.bodyScore;
 }
 
+/* ghostDelta: negative = ghost closer (good day), positive = further */
 function computeGhostDelta(day) {
-  // Negative delta = ghost closer (good day)
   let normalized = day.totalScore / 100;
   if (normalized > 1) normalized = 1;
   if (normalized < -1) normalized = -1;
+
   let delta = -normalized * 0.04;
 
   const hasAny =
@@ -94,15 +101,11 @@ function computeGhostDelta(day) {
     day.bodyScore !== 0 ||
     Object.values(day.lifeDone).some(Boolean) ||
     Object.values(day.bodyDone).some(Boolean);
-  if (!hasAny) delta = 0;
-  return delta;
+
+  return hasAny ? delta : 0;
 }
 
-function clamp(v, min, max) {
-  return Math.min(max, Math.max(min, v));
-}
-
-/* Bayesian-ish intensity for Life/Body */
+/* Life/Body intensity across used days */
 function computeLifeBodyIntensity() {
   let totalLife = 0;
   let totalBody = 0;
@@ -115,6 +118,7 @@ function computeLifeBodyIntensity() {
       d.bodyScore !== 0 ||
       Object.values(d.lifeDone).some(Boolean) ||
       Object.values(d.bodyDone).some(Boolean);
+
     if (!used) continue;
     usedDays++;
     totalLife += d.lifeScore;
@@ -122,7 +126,13 @@ function computeLifeBodyIntensity() {
   }
 
   if (usedDays === 0) {
-    return { lifeInt: 0, bodyInt: 0, usedDays: 0 };
+    return {
+      lifeInt: 0,
+      bodyInt: 0,
+      usedDays: 0,
+      totalLife: 0,
+      totalBody: 0
+    };
   }
 
   const maxDailyLife = LIFE_ORBITS.length * 10;
@@ -137,10 +147,11 @@ function computeLifeBodyIntensity() {
   return { lifeInt, bodyInt, usedDays, totalLife, totalBody };
 }
 
-/* Monte Carlo style projection: if current trend continues to 90 days */
+/* Monte Carlo-style projection & probabilities */
 function computeProjection() {
   const { lifeInt, bodyInt, usedDays, totalLife, totalBody } =
     computeLifeBodyIntensity();
+
   if (usedDays === 0) {
     return {
       lifeProb: null,
@@ -150,7 +161,6 @@ function computeProjection() {
     };
   }
 
-  // “Bayesian” style: probability = 40% + intensity * 60
   const lifeProb = Math.round(40 + lifeInt * 60);
   const bodyProb = Math.round(40 + bodyInt * 60);
   const overallProb = Math.round((lifeProb + bodyProb) / 2);
@@ -167,6 +177,41 @@ function computeProjection() {
   };
 }
 
+/* OmniScore 0–1000 */
+function computeOmniScore() {
+  let totalLife = 0;
+  let totalBody = 0;
+
+  for (let i = 1; i <= 90; i++) {
+    const d = data.days[i];
+    totalLife += d.lifeScore || 0;
+    totalBody += d.bodyScore || 0;
+  }
+
+  const maxLife = LIFE_ORBITS.length * 10 * 90;
+  const maxBody = BODY_ORBITS.length * 10 * 90;
+  const lifeRatio = maxLife ? clamp(totalLife / maxLife, 0, 1) : 0;
+  const bodyRatio = maxBody ? clamp(totalBody / maxBody, 0, 1) : 0;
+
+  let ghostAlignment = 1 - Math.abs(data.ghostDistance - 1.0) / 2;
+  ghostAlignment = clamp(ghostAlignment, 0, 1);
+
+  const proj = computeProjection();
+  const lifeProb = proj.lifeProb != null ? proj.lifeProb / 100 : 0;
+  const bodyProb = proj.bodyProb != null ? proj.bodyProb / 100 : 0;
+  const overallProb = proj.overallProb != null ? proj.overallProb / 100 : 0;
+
+  let score =
+    lifeRatio * 0.25 +
+    bodyRatio * 0.25 +
+    ghostAlignment * 0.2 +
+    lifeProb * 0.1 +
+    bodyProb * 0.1 +
+    overallProb * 0.1;
+
+  return Math.round(clamp(score, 0, 1) * 1000);
+}
+
 /* ------------------------------------------------------
    DOM ELEMENTS
 ------------------------------------------------------ */
@@ -177,12 +222,13 @@ const hudStreak = document.getElementById("hud-streak");
 const hudLifeXp = document.getElementById("hud-life-xp");
 const hudBodyXp = document.getElementById("hud-body-xp");
 const hudGhost = document.getElementById("hud-ghost");
+const hudOmni = document.getElementById("hud-omni");
 const btnReset = document.getElementById("btn-reset");
 
 // Hologram line
 const holoLine = document.getElementById("hologram-line");
 
-// Life carousel
+// Life orbit
 const lifePrev = document.getElementById("life-prev");
 const lifeNext = document.getElementById("life-next");
 const lifeCircle = document.getElementById("life-orbit-circle");
@@ -191,7 +237,7 @@ const lifeTodayEl = document.getElementById("life-orbit-today");
 const lifeXpEl = document.getElementById("life-orbit-xp");
 const lifeTags = document.getElementById("life-orbit-tags");
 
-// Body carousel
+// Body orbit
 const bodyPrev = document.getElementById("body-prev");
 const bodyNext = document.getElementById("body-next");
 const bodyCircle = document.getElementById("body-orbit-circle");
@@ -200,7 +246,7 @@ const bodyTodayEl = document.getElementById("body-orbit-today");
 const bodyXpEl = document.getElementById("body-orbit-xp");
 const bodyTags = document.getElementById("body-orbit-tags");
 
-// Season card
+// Season
 const dayGrid = document.getElementById("day-grid");
 const predLifeEl = document.getElementById("pred-life");
 const predBodyEl = document.getElementById("pred-body");
@@ -222,11 +268,9 @@ const modalClose = document.getElementById("modal-close");
 // Ticker
 const tickerInner = document.getElementById("ticker-inner");
 
-/* Carousel state */
+/* Local UI state */
 let currentLifeIndex = 0;
 let currentBodyIndex = 0;
-
-/* Double-tap detection */
 let lastTap = { type: null, index: null, time: 0 };
 
 /* ------------------------------------------------------
@@ -237,7 +281,6 @@ function renderHUD() {
   hudDay.textContent = `${data.currentDay} / 90`;
   hudStreak.textContent = data.streak || 0;
 
-  // Total life/body XP across season
   let totalLife = 0;
   let totalBody = 0;
   for (let i = 1; i <= 90; i++) {
@@ -247,42 +290,41 @@ function renderHUD() {
   }
   hudLifeXp.textContent = totalLife;
   hudBodyXp.textContent = totalBody;
-
   hudGhost.textContent = `${data.ghostDistance.toFixed(2)} AU`;
+
+  const omni = computeOmniScore();
+  hudOmni.textContent = omni;
 }
 
-function computeOrbitCompletionRatio(isLife, orbitName) {
+function computeOrbitCompletionRatio(isLife, name) {
   let count = 0;
   for (let i = 1; i <= 90; i++) {
     const d = data.days[i];
-    if (isLife) {
-      if (d.lifeDone && d.lifeDone[orbitName]) count++;
-    } else {
-      if (d.bodyDone && d.bodyDone[orbitName]) count++;
-    }
+    const dict = isLife ? d.lifeDone : d.bodyDone;
+    if (dict && dict[name]) count++;
   }
   return count / 90;
 }
 
 function renderLifeOrbit() {
-  const orbit = LIFE_ORBITS[currentLifeIndex];
+  const name = LIFE_ORBITS[currentLifeIndex];
   const d = data.days[data.currentDay];
-  const doneToday = !!d.lifeDone[orbit];
-  const ratio = computeOrbitCompletionRatio(true, orbit);
+  const doneToday = !!d.lifeDone[name];
+  const ratio = computeOrbitCompletionRatio(true, name);
   const deg = Math.round(ratio * 360);
-  lifeCircle.style.setProperty("--progress", `${deg}deg`);
 
-  lifeNameEl.textContent = orbit;
+  lifeCircle.style.setProperty("--progress", `${deg}deg`);
+  lifeNameEl.textContent = name;
   lifeTodayEl.textContent = `Tänään: ${doneToday ? "DONE" : "—"}`;
   lifeXpEl.textContent = `XP: ${Math.round(ratio * 100)}% (${Math.round(
     ratio * 90
   )}/90)`;
 
   lifeTags.innerHTML = "";
-  LIFE_ORBITS.forEach((name, idx) => {
+  LIFE_ORBITS.forEach((orbitName, idx) => {
     const tag = document.createElement("div");
     tag.className = "orbit-tag";
-    tag.textContent = name;
+    tag.textContent = orbitName;
     if (idx === currentLifeIndex) {
       tag.style.borderColor = "#22c55e";
       tag.style.color = "#bbf7d0";
@@ -292,24 +334,24 @@ function renderLifeOrbit() {
 }
 
 function renderBodyOrbit() {
-  const orbit = BODY_ORBITS[currentBodyIndex];
+  const name = BODY_ORBITS[currentBodyIndex];
   const d = data.days[data.currentDay];
-  const doneToday = !!d.bodyDone[orbit];
-  const ratio = computeOrbitCompletionRatio(false, orbit);
+  const doneToday = !!d.bodyDone[name];
+  const ratio = computeOrbitCompletionRatio(false, name);
   const deg = Math.round(ratio * 360);
-  bodyCircle.style.setProperty("--progress", `${deg}deg`);
 
-  bodyNameEl.textContent = orbit;
+  bodyCircle.style.setProperty("--progress", `${deg}deg`);
+  bodyNameEl.textContent = name;
   bodyTodayEl.textContent = `Tänään: ${doneToday ? "DONE" : "—"}`;
   bodyXpEl.textContent = `XP: ${Math.round(ratio * 100)}% (${Math.round(
     ratio * 90
   )}/90)`;
 
   bodyTags.innerHTML = "";
-  BODY_ORBITS.forEach((name, idx) => {
+  BODY_ORBITS.forEach((orbitName, idx) => {
     const tag = document.createElement("div");
     tag.className = "orbit-tag";
-    tag.textContent = name;
+    tag.textContent = orbitName;
     if (idx === currentBodyIndex) {
       tag.style.borderColor = "#38bdf8";
       tag.style.color = "#bae6fd";
@@ -320,8 +362,8 @@ function renderBodyOrbit() {
 
 function renderSeasonGrid() {
   dayGrid.innerHTML = "";
-
   let maxScore = 0;
+
   for (let i = 1; i <= 90; i++) {
     maxScore = Math.max(maxScore, data.days[i].totalScore || 0);
   }
@@ -329,18 +371,17 @@ function renderSeasonGrid() {
   for (let i = 1; i <= 90; i++) {
     const d = data.days[i];
     const cell = document.createElement("div");
-    cell.className = "day-cell";
+    cell.className = "day-cell day-empty";
     cell.dataset.day = i;
 
-    let cls = "day-empty";
     if (d.totalScore > 0 && maxScore > 0) {
       const r = d.totalScore / maxScore;
-      if (r < 0.25) cls = "day-low";
-      else if (r < 0.5) cls = "day-mid";
-      else if (r < 0.8) cls = "day-high";
-      else cls = "day-elite";
+      cell.classList.remove("day-empty");
+      if (r < 0.25) cell.classList.add("day-low");
+      else if (r < 0.5) cell.classList.add("day-mid");
+      else if (r < 0.8) cell.classList.add("day-high");
+      else cell.classList.add("day-elite");
     }
-    cell.classList.add(cls);
 
     if (i === data.currentDay) cell.classList.add("current");
     if (d.pr) cell.classList.add("pr");
@@ -359,16 +400,21 @@ function renderPredictions() {
     predOverallEl.textContent = "—";
     return;
   }
+
   predLifeEl.textContent = `${proj.lifeProb}%`;
   predBodyEl.textContent = `${proj.bodyProb}%`;
   predOverallEl.textContent = `${proj.overallProb}% • proj. score ${proj.projectedScore}`;
 }
 
-/* Hologrammi-lanka visual */
+/* ------------------------------------------------------
+   HOLOGRAM LINE
+------------------------------------------------------ */
+
 function getLastFinalizedDay() {
   let last = null;
   for (let i = 1; i <= 90; i++) {
-    if (data.days[i].locked) last = data.days[i];
+    const d = data.days[i];
+    if (d.locked) last = d;
   }
   return last;
 }
@@ -376,69 +422,68 @@ function getLastFinalizedDay() {
 function updateHologramLine() {
   if (!holoLine) return;
 
-  const lastDay = getLastFinalizedDay();
-  if (!lastDay) {
+  const last = getLastFinalizedDay();
+  if (!last) {
     holoLine.style.width = "80px";
     holoLine.style.opacity = "0.25";
     holoLine.style.transform = "rotate(0deg)";
-    holoLine.classList.remove("flash");
+    holoLine.style.filter = "none";
     return;
   }
 
-  let momentum = lastDay.totalScore;
+  let momentum = last.totalScore;
   momentum = clamp(momentum, -50, 200);
-  const baseWidth = 80;
-  const width = baseWidth + momentum * 0.5;
+  const width = 80 + momentum * 0.5;
+  holoLine.style.width = `${Math.max(40, width)}px`;
+  holoLine.style.opacity = "1";
 
-  const delta = lastDay.ghostDelta || 0;
-  let angle = delta * -80;
-  angle = clamp(angle, -25, 25);
-
-  const finalWidth = Math.max(40, width);
-
-  holoLine.style.width = `${finalWidth}px`;
-  holoLine.style.opacity = "0.9";
+  const angle = clamp(last.ghostDelta * -80, -25, 25);
   holoLine.style.transform = `rotate(${angle}deg)`;
 
-  // color bias: more life vs body
   const { lifeInt, bodyInt } = computeLifeBodyIntensity();
-  if (lifeInt === 0 && bodyInt === 0) {
-    holoLine.style.filter = "hue-rotate(0deg)";
-  } else {
-    const diff = bodyInt - lifeInt;
-    const hueShift = diff * 40; // + = blueish, - = greenish
-    holoLine.style.filter = `hue-rotate(${hueShift}deg)`;
+  let hueShift = 0;
+  if (lifeInt || bodyInt) {
+    hueShift = (bodyInt - lifeInt) * 40;
   }
+  holoLine.style.filter = `hue-rotate(${hueShift}deg)`;
 }
 
 function flashHologram() {
-  if (!holoLine) return;
   holoLine.classList.add("flash");
   setTimeout(() => holoLine.classList.remove("flash"), 350);
 }
 
-/* XP burst on orbit */
+/* ------------------------------------------------------
+   XP BURST
+------------------------------------------------------ */
+
 function orbitXpBurst(circle, label) {
+  // cleanup old bursts (bugfix)
+  circle.querySelectorAll(".xp-burst").forEach((el) => el.remove());
+
   const span = document.createElement("div");
   span.className = "xp-burst";
   span.textContent = label || "+10";
   span.style.left = "50%";
   span.style.top = "50%";
   circle.appendChild(span);
-  setTimeout(() => {
-    if (span.parentNode) span.parentNode.removeChild(span);
-  }, 600);
+  setTimeout(() => span.remove(), 600);
 }
 
-/* Ticker */
+/* ------------------------------------------------------
+   TICKER
+------------------------------------------------------ */
+
 function updateTicker() {
   const segments = [];
+
   for (let i = 1; i <= 90; i++) {
     const d = data.days[i];
     const used =
       d.totalScore !== 0 ||
       Object.values(d.lifeDone).some(Boolean) ||
       Object.values(d.bodyDone).some(Boolean);
+
     if (!used) continue;
 
     let s = `DAY ${i} • LIFE ${d.lifeScore} • BODY ${d.bodyScore} • TOTAL ${d.totalScore}`;
@@ -452,9 +497,12 @@ function updateTicker() {
   const proj = computeProjection();
   if (proj.lifeProb != null) {
     segments.push(
-      `PROJ: LIFE ${proj.lifeProb}% • BODY ${proj.bodyProb}% • OVERALL ${proj.overallProb}% • SCORE~${proj.projectedScore}`
+      `PROJ: LIFE ${proj.lifeProb}% • BODY ${proj.bodyProb}% • OVERALL ${proj.overallProb}%`
     );
   }
+
+  const omni = computeOmniScore();
+  segments.push(`OMNISCORE ${omni}/1000`);
 
   tickerInner.textContent =
     segments.length === 0
@@ -467,26 +515,26 @@ function updateTicker() {
 }
 
 /* ------------------------------------------------------
-   DAY MODAL
+   MODAL
 ------------------------------------------------------ */
 
-function openDay(n) {
-  data.currentDay = n;
+function openDay(dayNumber) {
+  data.currentDay = dayNumber;
   save();
   updateAll();
 
-  const d = data.days[n];
-  modalDayTitle.textContent = `Päivä ${n}`;
+  const d = data.days[dayNumber];
+  modalDayTitle.textContent = `Päivä ${dayNumber}`;
   modalLifeScore.textContent = d.lifeScore;
   modalBodyScore.textContent = d.bodyScore;
   modalTotalScore.textContent = d.totalScore;
 
   modalLifeList.innerHTML = "";
-  const lifeDone = Object.entries(d.lifeDone).filter(([_, v]) => v);
-  if (lifeDone.length === 0) {
+  const lifeDoneEntries = Object.entries(d.lifeDone).filter(([_, v]) => v);
+  if (lifeDoneEntries.length === 0) {
     modalLifeList.innerHTML = "<li>Ei suoritettuja Life-orbiteja.</li>";
   } else {
-    lifeDone.forEach(([name]) => {
+    lifeDoneEntries.forEach(([name]) => {
       const li = document.createElement("li");
       li.textContent = name;
       modalLifeList.appendChild(li);
@@ -494,11 +542,11 @@ function openDay(n) {
   }
 
   modalBodyList.innerHTML = "";
-  const bodyDone = Object.entries(d.bodyDone).filter(([_, v]) => v);
-  if (bodyDone.length === 0) {
+  const bodyDoneEntries = Object.entries(d.bodyDone).filter(([_, v]) => v);
+  if (bodyDoneEntries.length === 0) {
     modalBodyList.innerHTML = "<li>Ei treenattuja Body-orbiteja.</li>";
   } else {
-    bodyDone.forEach(([name]) => {
+    bodyDoneEntries.forEach(([name]) => {
       const li = document.createElement("li");
       li.textContent = name;
       modalBodyList.appendChild(li);
@@ -511,9 +559,13 @@ function openDay(n) {
     modalGhostDistance.textContent = "—";
   }
 
-  if (typeof d.ghostDelta === "number" && d.ghostDelta !== 0) {
-    if (d.ghostDelta < 0) {
-      modalGhostShift.textContent = `Closer ${Math.abs(d.ghostDelta).toFixed(3)} AU`;
+  if (typeof d.ghostDelta === "number") {
+    if (d.ghostDelta === 0) {
+      modalGhostShift.textContent = "0.000 AU";
+    } else if (d.ghostDelta < 0) {
+      modalGhostShift.textContent = `Closer ${Math.abs(d.ghostDelta).toFixed(
+        3
+      )} AU`;
     } else {
       modalGhostShift.textContent = `Farther ${d.ghostDelta.toFixed(3)} AU`;
     }
@@ -533,10 +585,10 @@ modalBackdrop.addEventListener("click", (e) => {
 });
 
 /* ------------------------------------------------------
-   EVENTS – CAROUSELS, DOUBLE TAP, FINALIZE, RESET
+   EVENTS – ORBIT NAV & DOUBLE TAP
 ------------------------------------------------------ */
 
-// Life carousel navigation
+// Life orbit navigation
 lifePrev.addEventListener("click", () => {
   currentLifeIndex =
     (currentLifeIndex - 1 + LIFE_ORBITS.length) % LIFE_ORBITS.length;
@@ -548,7 +600,7 @@ lifeNext.addEventListener("click", () => {
   renderLifeOrbit();
 });
 
-// Body carousel navigation
+// Body orbit navigation
 bodyPrev.addEventListener("click", () => {
   currentBodyIndex =
     (currentBodyIndex - 1 + BODY_ORBITS.length) % BODY_ORBITS.length;
@@ -560,23 +612,24 @@ bodyNext.addEventListener("click", () => {
   renderBodyOrbit();
 });
 
-// Life orbit double-tap
+// Double-tap LIFE
 lifeCircle.addEventListener("click", () => {
   const now = Date.now();
   const idx = currentLifeIndex;
+
   if (
     lastTap.type === "life" &&
     lastTap.index === idx &&
     now - lastTap.time < 350
   ) {
-    toggleLifeOrbitDone(idx);
+    toggleLifeOrbit(idx);
     lastTap = { type: null, index: null, time: 0 };
   } else {
     lastTap = { type: "life", index: idx, time: now };
   }
 });
 
-function toggleLifeOrbitDone(index) {
+function toggleLifeOrbit(index) {
   const name = LIFE_ORBITS[index];
   const d = data.days[data.currentDay];
   if (d.locked) {
@@ -595,23 +648,24 @@ function toggleLifeOrbitDone(index) {
   orbitXpBurst(lifeCircle, d.lifeDone[name] ? "+10" : "0");
 }
 
-// Body orbit double-tap
+// Double-tap BODY
 bodyCircle.addEventListener("click", () => {
   const now = Date.now();
   const idx = currentBodyIndex;
+
   if (
     lastTap.type === "body" &&
     lastTap.index === idx &&
     now - lastTap.time < 350
   ) {
-    toggleBodyOrbitDone(idx);
+    toggleBodyOrbit(idx);
     lastTap = { type: null, index: null, time: 0 };
   } else {
     lastTap = { type: "body", index: idx, time: now };
   }
 });
 
-function toggleBodyOrbitDone(index) {
+function toggleBodyOrbit(index) {
   const name = BODY_ORBITS[index];
   const d = data.days[data.currentDay];
   if (d.locked) {
@@ -630,7 +684,10 @@ function toggleBodyOrbitDone(index) {
   orbitXpBurst(bodyCircle, d.bodyDone[name] ? "+10" : "0");
 }
 
-// Finalize day
+/* ------------------------------------------------------
+   FINALIZE DAY
+------------------------------------------------------ */
+
 btnFinalizeDay.addEventListener("click", () => {
   const d = data.days[data.currentDay];
   if (d.locked) {
@@ -638,6 +695,7 @@ btnFinalizeDay.addEventListener("click", () => {
     return;
   }
 
+  // Varaus jos täysin tyhjä päivä
   if (
     d.lifeScore === 0 &&
     d.bodyScore === 0 &&
@@ -650,8 +708,11 @@ btnFinalizeDay.addEventListener("click", () => {
     if (!ok) return;
   }
 
-  // PR check
-  let best = -Infinity;
+  // varmuuden vuoksi
+  recomputeDay(data.currentDay);
+
+  // PR-check
+  let best = 0;
   for (let i = 1; i <= 90; i++) {
     if (i === data.currentDay) continue;
     best = Math.max(best, data.days[i].totalScore);
@@ -660,37 +721,36 @@ btnFinalizeDay.addEventListener("click", () => {
 
   // Ghost update
   const delta = computeGhostDelta(d);
-  data.ghostDistance += delta;
-  data.ghostDistance = clamp(data.ghostDistance, 0.2, 3.0);
   d.ghostDelta = delta;
+  data.ghostDistance = clamp(data.ghostDistance + delta, 0.2, 3.0);
   d.ghostDistanceAfter = data.ghostDistance;
 
-  d.locked = true;
-
   // streak
-  if (data.lastCompletedDay === data.currentDay - 1) {
-    data.streak++;
-  } else {
-    data.streak = 1;
-  }
+  if (data.lastCompletedDay === data.currentDay - 1) data.streak++;
+  else data.streak = 1;
   data.lastCompletedDay = data.currentDay;
 
+  d.locked = true;
   if (data.currentDay < 90) data.currentDay++;
 
   save();
-  flashHologram();
   flashHUD();
+  flashHologram();
   updateAll();
 });
 
-// HUD flash
+/* HUD flash */
 function flashHUD() {
-  const chips = document.querySelectorAll(".hud-chip");
-  chips.forEach((c) => c.classList.add("flash"));
-  setTimeout(() => chips.forEach((c) => c.classList.remove("flash")), 300);
+  document.querySelectorAll(".hud-chip").forEach((chip) => {
+    chip.classList.add("flash");
+    setTimeout(() => chip.classList.remove("flash"), 300);
+  });
 }
 
-// RESET
+/* ------------------------------------------------------
+   RESET
+------------------------------------------------------ */
+
 btnReset.addEventListener("click", () => {
   if (!confirm("Reset Bloodliner Prime Hub? Kaikki data poistetaan.")) return;
   localStorage.removeItem(STORAGE_KEY);
@@ -698,7 +758,7 @@ btnReset.addEventListener("click", () => {
 });
 
 /* ------------------------------------------------------
-   UPDATE ALL
+   MASTER UPDATE
 ------------------------------------------------------ */
 
 function updateAll() {
