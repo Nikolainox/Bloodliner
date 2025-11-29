@@ -107,7 +107,6 @@ body {
 }
 
 /* HOLO WRAPPER */
-
 #holo-wrapper {
   position: relative;
   padding: 6px 10px 2px;
@@ -121,7 +120,6 @@ body {
 }
 
 /* Holo console toggle strip */
-
 #holo-console-toggle {
   position: absolute;
   left: 6px;
@@ -160,7 +158,6 @@ body {
 }
 
 /* Avatar + Hologram line */
-
 #hologram-line {
   height: 3px;
   width: 80px;
@@ -190,7 +187,6 @@ body {
 }
 
 /* Avatar */
-
 #holo-avatar {
   position: absolute;
   bottom: 14px;
@@ -220,22 +216,18 @@ body {
   stroke: rgba(56, 189, 248, 0.2);
   stroke-width: 2;
 }
-
 .avatar-head {
   fill: rgba(56, 189, 248, 0.8);
 }
-
 .avatar-torso {
   fill: rgba(15, 23, 42, 0.95);
   stroke: rgba(56, 189, 248, 0.9);
   stroke-width: 1;
 }
-
 .avatar-arm {
   stroke: rgba(56, 189, 248, 0.6);
   stroke-width: 1.3;
 }
-
 .avatar-core-line {
   stroke: rgba(34, 197, 94, 0.9);
   stroke-width: 1.4;
@@ -267,7 +259,6 @@ body {
 }
 
 /* Avatar pulse */
-
 .avatar-pulse {
   animation: avatarPulse 0.55s ease-out;
 }
@@ -279,7 +270,6 @@ body {
 }
 
 /* Destiny Whisper */
-
 #destiny-whisper {
   position: absolute;
   bottom: 56px;
@@ -304,7 +294,6 @@ body {
 }
 
 /* Holo Console panel */
-
 #holo-console {
   position: fixed;
   top: 56px;
@@ -396,7 +385,6 @@ body {
 }
 
 /* Ghost sparkline */
-
 #ghost-sparkline {
   display:flex;
   gap:2px;
@@ -417,7 +405,6 @@ body {
 }
 
 /* Life / Body Load bars */
-
 .holo-bars {
   display:flex;
   flex-direction:column;
@@ -455,7 +442,6 @@ body {
 }
 
 /* TICKER */
-
 #ticker-bar {
   position: sticky;
   top: 48px;
@@ -483,7 +469,6 @@ body {
 }
 
 /* Layout */
-
 #layout {
   display: flex;
   flex-direction: column;
@@ -514,7 +499,6 @@ body {
 }
 
 /* Orbit Circle */
-
 .orbit-row {
   display: flex;
   align-items: center;
@@ -593,7 +577,6 @@ body {
 }
 
 /* Orbit tags */
-
 .orbit-tags {
   display: flex;
   flex-wrap: wrap;
@@ -610,7 +593,6 @@ body {
 }
 
 /* XP Burst */
-
 .xp-burst {
   position: absolute;
   font-size: 11px;
@@ -627,7 +609,6 @@ body {
 }
 
 /* 90 Season Grid */
-
 #day-grid {
   display: grid;
   grid-template-columns: repeat(10,1fr);
@@ -676,7 +657,6 @@ body {
 }
 
 /* Predictions */
-
 .predictions {
   display:flex;
   gap:6px;
@@ -698,7 +678,6 @@ body {
 }
 
 /* Buttons */
-
 .btn {
   border:none;
   cursor:pointer;
@@ -725,11 +704,9 @@ body {
 }
 
 .btn.fullwidth { width:100%; }
-
 .btn.big { padding:10px 14px; }
 
 /* Modal */
-
 #day-modal-backdrop {
   position:fixed;
   inset:0;
@@ -771,8 +748,154 @@ body {
   margin:4px 0 6px;
 }
 
-/* Desktop layout */
+/* JARVIS AI HOLOGRAM OVERLAY */
+#jarvis-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, rgba(15,23,42,0.8), rgba(0,0,0,0.9));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 120;
+}
 
+#jarvis-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#jarvis-panel {
+  width: 260px;
+  max-width: 90vw;
+  border-radius: 18px;
+  border: 1px solid rgba(148,163,184,0.8);
+  background:
+    radial-gradient(circle at top, rgba(59,130,246,0.35), transparent 55%),
+    radial-gradient(circle at bottom, rgba(239,68,68,0.35), #020617 80%);
+  box-shadow:
+    0 30px 70px rgba(0,0,0,0.95),
+    0 0 32px rgba(56,189,248,0.7);
+  padding: 10px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transform: translateY(40px) scale(0.92);
+  opacity: 0;
+  animation: jarvisEnter 0.28s ease-out forwards;
+}
+
+.jarvis-frame {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid rgba(15,23,42,0.9);
+  background: radial-gradient(circle at top, rgba(15,23,42,0.95), #020617 80%);
+  overflow: hidden;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jarvis-svg {
+  width: 115px;
+  height: auto;
+  filter:
+    drop-shadow(0 0 10px rgba(56,189,248,0.9))
+    drop-shadow(0 0 20px rgba(59,130,246,0.8));
+}
+
+.jarvis-aura {
+  fill: none;
+  stroke: rgba(56,189,248,0.4);
+  stroke-width: 1.8;
+}
+
+.jarvis-head {
+  fill: rgba(15,23,42,0.9);
+  stroke: rgba(56,189,248,0.9);
+  stroke-width: 1.4;
+}
+
+.jarvis-grid {
+  stroke: rgba(56,189,248,0.4);
+  stroke-width: 0.8;
+}
+
+.jarvis-eye {
+  fill: #e5e7eb;
+}
+
+.jarvis-torso {
+  fill: rgba(15,23,42,0.9);
+  stroke: rgba(56,189,248,0.7);
+  stroke-width: 1.4;
+}
+
+.jarvis-shoulder {
+  stroke: rgba(248,113,113,0.8);
+  stroke-width: 1.4;
+}
+
+/* scan line */
+.jarvis-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 26px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(59,130,246,0.28),
+    rgba(56,189,248,0.4),
+    rgba(59,130,246,0.28),
+    transparent
+  );
+  animation: jarvisScan 1.4s linear infinite;
+  mix-blend-mode: screen;
+}
+
+/* Jarvis text */
+.jarvis-text {
+  padding: 2px 2px 0;
+  font-size: 10px;
+}
+
+#jarvis-title {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #e5e7eb;
+  margin-bottom: 2px;
+}
+
+#jarvis-main {
+  font-size: 11px;
+  margin-bottom: 1px;
+}
+
+#jarvis-sub {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+/* animations */
+@keyframes jarvisEnter {
+  0% { transform: translateY(40px) scale(0.92); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes jarvisScan {
+  0% { transform: translateY(-90px); opacity: 0; }
+  15% { opacity: 0.9; }
+  50% { transform: translateY(0); opacity: 0.9; }
+  85% { opacity: 0.9; }
+  100% { transform: translateY(90px); opacity: 0; }
+}
+
+/* Desktop layout */
 @media (min-width:900px) {
   #layout {
     display:grid;
@@ -796,7 +919,6 @@ body {
 }
 
 /* Mobile tweaks */
-
 @media (max-width:520px) {
   #hud {
     flex-wrap:wrap;
