@@ -1,16 +1,9 @@
-/* ------------------------------------------------------
-   BLOODLINER PRIME HUB • FINAL LAUNCH BUILD
-   Life x Body x Ghost x OmniScore
-   - 6 Life-orbits (media-mystic)
-   - 10 Body-orbits
-   - 90 day grid
-   - Ghost line
-   - OmniScore (0–1000)
------------------------------------------------------- */
+/* BLOODLINER PRIME HUB • v4
+   Life x Body x Ghost x Avatar x Destiny Whisper x Holo Console
+*/
 
-const STORAGE_KEY = "bloodliner_prime_hub_v2";
+const STORAGE_KEY = "bloodliner_prime_hub_v4";
 
-/* LIFE ORBITS – 6 HABITS OF ASCENSION */
 const LIFE_ORBITS = [
   "Mindforge Ritual",
   "Discipline Engine",
@@ -20,7 +13,6 @@ const LIFE_ORBITS = [
   "Spirit Core"
 ];
 
-/* BODY ORBITS – MUSCLE SET */
 const BODY_ORBITS = [
   "Chest",
   "Back",
@@ -34,9 +26,7 @@ const BODY_ORBITS = [
   "Cardio Engine"
 ];
 
-/* ------------------------------------------------------
-   STATE INIT
------------------------------------------------------- */
+/* STATE INIT */
 
 let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
   days: {},
@@ -46,7 +36,6 @@ let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
   ghostDistance: 1.0
 };
 
-// init 90 days if missing
 for (let i = 1; i <= 90; i++) {
   if (!data.days[i]) data.days[i] = createEmptyDay(i);
 }
@@ -54,15 +43,11 @@ if (typeof data.ghostDistance !== "number") data.ghostDistance = 1.0;
 
 save();
 
-/* ------------------------------------------------------
-   HELPERS
------------------------------------------------------- */
-
 function createEmptyDay(dayNumber) {
   return {
     dayNumber,
-    lifeDone: {},   // { orbitName: true }
-    bodyDone: {},   // { orbitName: true }
+    lifeDone: {},
+    bodyDone: {},
     lifeScore: 0,
     bodyScore: 0,
     totalScore: 0,
@@ -88,7 +73,8 @@ function recomputeDay(n) {
   d.totalScore = d.lifeScore + d.bodyScore;
 }
 
-/* ghostDelta: negative = ghost closer (good day), positive = further */
+/* Ghost delta */
+
 function computeGhostDelta(day) {
   let normalized = day.totalScore / 100;
   if (normalized > 1) normalized = 1;
@@ -105,7 +91,8 @@ function computeGhostDelta(day) {
   return hasAny ? delta : 0;
 }
 
-/* Life/Body intensity across used days */
+/* Life/Body intensity */
+
 function computeLifeBodyIntensity() {
   let totalLife = 0;
   let totalBody = 0;
@@ -126,13 +113,7 @@ function computeLifeBodyIntensity() {
   }
 
   if (usedDays === 0) {
-    return {
-      lifeInt: 0,
-      bodyInt: 0,
-      usedDays: 0,
-      totalLife: 0,
-      totalBody: 0
-    };
+    return { lifeInt: 0, bodyInt: 0, usedDays: 0, totalLife: 0, totalBody: 0 };
   }
 
   const maxDailyLife = LIFE_ORBITS.length * 10;
@@ -141,13 +122,17 @@ function computeLifeBodyIntensity() {
   const avgLife = totalLife / usedDays;
   const avgBody = totalBody / usedDays;
 
-  const lifeInt = clamp(avgLife / maxDailyLife, 0, 1);
-  const bodyInt = clamp(avgBody / maxDailyBody, 0, 1);
-
-  return { lifeInt, bodyInt, usedDays, totalLife, totalBody };
+  return {
+    lifeInt: clamp(avgLife / maxDailyLife, 0, 1),
+    bodyInt: clamp(avgBody / maxDailyBody, 0, 1),
+    usedDays,
+    totalLife,
+    totalBody
+  };
 }
 
-/* Monte Carlo-style projection & probabilities */
+/* Projection */
+
 function computeProjection() {
   const { lifeInt, bodyInt, usedDays, totalLife, totalBody } =
     computeLifeBodyIntensity();
@@ -169,15 +154,11 @@ function computeProjection() {
   const avgPerDay = currentTotalScore / usedDays;
   const projectedScore = Math.round(avgPerDay * 90);
 
-  return {
-    lifeProb,
-    bodyProb,
-    overallProb,
-    projectedScore
-  };
+  return { lifeProb, bodyProb, overallProb, projectedScore };
 }
 
-/* OmniScore 0–1000 */
+/* OmniScore */
+
 function computeOmniScore() {
   let totalLife = 0;
   let totalBody = 0;
@@ -212,11 +193,8 @@ function computeOmniScore() {
   return Math.round(clamp(score, 0, 1) * 1000);
 }
 
-/* ------------------------------------------------------
-   DOM ELEMENTS
------------------------------------------------------- */
+/* DOM ELEMENTS */
 
-// HUD
 const hudDay = document.getElementById("hud-day");
 const hudStreak = document.getElementById("hud-streak");
 const hudLifeXp = document.getElementById("hud-life-xp");
@@ -225,10 +203,13 @@ const hudGhost = document.getElementById("hud-ghost");
 const hudOmni = document.getElementById("hud-omni");
 const btnReset = document.getElementById("btn-reset");
 
-// Hologram line
+const holoWrapper = document.getElementById("holo-wrapper");
 const holoLine = document.getElementById("hologram-line");
+const destinyWhisper = document.getElementById("destiny-whisper");
+const holoAvatar = document.getElementById("holo-avatar");
+const holoConsoleToggle = document.getElementById("holo-console-toggle");
+const holoConsole = document.getElementById("holo-console");
 
-// Life orbit
 const lifePrev = document.getElementById("life-prev");
 const lifeNext = document.getElementById("life-next");
 const lifeCircle = document.getElementById("life-orbit-circle");
@@ -237,7 +218,6 @@ const lifeTodayEl = document.getElementById("life-orbit-today");
 const lifeXpEl = document.getElementById("life-orbit-xp");
 const lifeTags = document.getElementById("life-orbit-tags");
 
-// Body orbit
 const bodyPrev = document.getElementById("body-prev");
 const bodyNext = document.getElementById("body-next");
 const bodyCircle = document.getElementById("body-orbit-circle");
@@ -246,14 +226,12 @@ const bodyTodayEl = document.getElementById("body-orbit-today");
 const bodyXpEl = document.getElementById("body-orbit-xp");
 const bodyTags = document.getElementById("body-orbit-tags");
 
-// Season
 const dayGrid = document.getElementById("day-grid");
 const predLifeEl = document.getElementById("pred-life");
 const predBodyEl = document.getElementById("pred-body");
 const predOverallEl = document.getElementById("pred-overall");
 const btnFinalizeDay = document.getElementById("btn-finalize-day");
 
-// Modal
 const modalBackdrop = document.getElementById("day-modal-backdrop");
 const modalDayTitle = document.getElementById("modal-day-title");
 const modalLifeScore = document.getElementById("modal-life-score");
@@ -265,17 +243,32 @@ const modalGhostDistance = document.getElementById("modal-ghost-distance");
 const modalGhostShift = document.getElementById("modal-ghost-shift");
 const modalClose = document.getElementById("modal-close");
 
-// Ticker
 const tickerInner = document.getElementById("ticker-inner");
 
-/* Local UI state */
+/* Holo Console DOM */
+
+const hcOmni = document.getElementById("hc-omni");
+const hcGhost = document.getElementById("hc-ghost");
+const hcStreak = document.getElementById("hc-streak");
+const hcToday = document.getElementById("hc-today");
+const hcLastPr = document.getElementById("hc-last-pr");
+const hcLifeProb = document.getElementById("hc-life-prob");
+const hcBodyProb = document.getElementById("hc-body-prob");
+const hcOverallProb = document.getElementById("hc-overall-prob");
+const hcProjected = document.getElementById("hc-projected");
+const hcGhostRange = document.getElementById("hc-ghost-range");
+const hcLifeLoad = document.getElementById("hc-life-load");
+const hcBodyLoad = document.getElementById("hc-body-load");
+const ghostSparkline = document.getElementById("ghost-sparkline");
+
+/* LOCAL UI STATE */
+
 let currentLifeIndex = 0;
 let currentBodyIndex = 0;
 let lastTap = { type: null, index: null, time: 0 };
+let holoConsoleOpen = false;
 
-/* ------------------------------------------------------
-   RENDERING
------------------------------------------------------- */
+/* RENDER HUD */
 
 function renderHUD() {
   hudDay.textContent = `${data.currentDay} / 90`;
@@ -296,6 +289,8 @@ function renderHUD() {
   hudOmni.textContent = omni;
 }
 
+/* Orbit ratios */
+
 function computeOrbitCompletionRatio(isLife, name) {
   let count = 0;
   for (let i = 1; i <= 90; i++) {
@@ -305,6 +300,8 @@ function computeOrbitCompletionRatio(isLife, name) {
   }
   return count / 90;
 }
+
+/* Life Orbit */
 
 function renderLifeOrbit() {
   const name = LIFE_ORBITS[currentLifeIndex];
@@ -333,6 +330,8 @@ function renderLifeOrbit() {
   });
 }
 
+/* Body Orbit */
+
 function renderBodyOrbit() {
   const name = BODY_ORBITS[currentBodyIndex];
   const d = data.days[data.currentDay];
@@ -359,6 +358,8 @@ function renderBodyOrbit() {
     bodyTags.appendChild(tag);
   });
 }
+
+/* Season Grid */
 
 function renderSeasonGrid() {
   dayGrid.innerHTML = "";
@@ -392,6 +393,8 @@ function renderSeasonGrid() {
   }
 }
 
+/* Predictions */
+
 function renderPredictions() {
   const proj = computeProjection();
   if (proj.lifeProb == null) {
@@ -406,16 +409,11 @@ function renderPredictions() {
   predOverallEl.textContent = `${proj.overallProb}% • proj. score ${proj.projectedScore}`;
 }
 
-/* ------------------------------------------------------
-   HOLOGRAM LINE
------------------------------------------------------- */
+/* Hologram + Avatar */
 
 function getLastFinalizedDay() {
   let last = null;
-  for (let i = 1; i <= 90; i++) {
-    const d = data.days[i];
-    if (d.locked) last = d;
-  }
+  for (let i = 1; i <= 90; i++) if (data.days[i].locked) last = data.days[i];
   return last;
 }
 
@@ -428,6 +426,7 @@ function updateHologramLine() {
     holoLine.style.opacity = "0.25";
     holoLine.style.transform = "rotate(0deg)";
     holoLine.style.filter = "none";
+    updateAvatarState();
     return;
   }
 
@@ -442,25 +441,138 @@ function updateHologramLine() {
 
   const { lifeInt, bodyInt } = computeLifeBodyIntensity();
   let hueShift = 0;
-  if (lifeInt || bodyInt) {
-    hueShift = (bodyInt - lifeInt) * 40;
-  }
+  if (lifeInt || bodyInt) hueShift = (bodyInt - lifeInt) * 40;
   holoLine.style.filter = `hue-rotate(${hueShift}deg)`;
+
+  updateAvatarState();
 }
 
 function flashHologram() {
+  if (!holoLine) return;
   holoLine.classList.add("flash");
   setTimeout(() => holoLine.classList.remove("flash"), 350);
 }
 
-/* ------------------------------------------------------
-   XP BURST
------------------------------------------------------- */
+/* Avatar state */
+
+function updateAvatarState() {
+  if (!holoAvatar) return;
+
+  const omni = computeOmniScore();
+  const ghost = data.ghostDistance;
+  const streak = data.streak || 0;
+
+  holoAvatar.classList.remove(
+    "avatar-state-base",
+    "avatar-state-align",
+    "avatar-state-momentum",
+    "avatar-state-ascend"
+  );
+
+  let stateClass = "avatar-state-base";
+  const closeGhost = ghost < 0.8;
+  const farGhost = ghost > 1.5;
+
+  if (omni < 400) {
+    stateClass = "avatar-state-base";
+  } else if (omni >= 400 && omni < 700) {
+    if (closeGhost) stateClass = "avatar-state-align";
+    else if (farGhost) stateClass = "avatar-state-base";
+    else stateClass = "avatar-state-align";
+  } else if (omni >= 700 && omni < 850) {
+    if (streak >= 3) stateClass = "avatar-state-momentum";
+    else stateClass = "avatar-state-align";
+  } else if (omni >= 850) {
+    stateClass = "avatar-state-ascend";
+  }
+
+  holoAvatar.classList.add(stateClass);
+}
+
+function pulseAvatar() {
+  if (!holoAvatar) return;
+  holoAvatar.classList.remove("avatar-pulse");
+  void holoAvatar.offsetWidth;
+  holoAvatar.classList.add("avatar-pulse");
+  setTimeout(() => holoAvatar.classList.remove("avatar-pulse"), 600);
+}
+
+/* Destiny Whisper */
+
+function computeDestinyWhisper() {
+  const omni = computeOmniScore();
+  const ghost = data.ghostDistance;
+  const streak = data.streak || 0;
+  const today = data.days[data.currentDay];
+
+  const lifeToday = today.lifeScore || 0;
+  const bodyToday = today.bodyScore || 0;
+
+  const lowOmni = omni < 350;
+  const midOmni = omni >= 350 && omni < 700;
+  const highOmni = omni >= 700;
+
+  const farGhost = ghost > 1.5;
+  const closeGhost = ghost < 0.8;
+
+  if (lowOmni && farGhost) {
+    if (lifeToday === 0)
+      return "Destiny: One Mindforge Ritual. Return to path.";
+    if (bodyToday === 0)
+      return "Destiny: One Body Core set. Anchor the day.";
+    return "Destiny: Lock one Life orbit, then breathe slow.";
+  }
+
+  if (midOmni && farGhost) {
+    return "Destiny: Tighten Discipline Engine. Trim one distraction.";
+  }
+
+  if (closeGhost && highOmni && streak >= 3) {
+    if (bodyToday === 0)
+      return "Destiny: Push Body Core. One strong set for future self.";
+    return "Destiny: Refine Aura. Small improvement, big compounding.";
+  }
+
+  if (midOmni && streak <= 1) {
+    return "Destiny: One small Life rep. Break hesitation.";
+  }
+
+  if (lifeToday === 0 && bodyToday === 0) {
+    return "Destiny: Choose one orbit. Start with the smallest move.";
+  }
+
+  if (lifeToday > 0 && bodyToday === 0) {
+    return "Destiny: Body wants in. One simple set is enough.";
+  }
+
+  if (bodyToday > 0 && lifeToday === 0) {
+    return "Destiny: Forge the mind once before sleep.";
+  }
+
+  return "Destiny: You are on path. Protect the streak.";
+}
+
+function showDestinyWhisper() {
+  if (!destinyWhisper) return;
+
+  const msg = computeDestinyWhisper();
+  destinyWhisper.textContent = msg || "Destiny: Listen. Then move once.";
+
+  destinyWhisper.classList.remove("destiny-show");
+  void destinyWhisper.offsetWidth;
+  destinyWhisper.classList.add("destiny-show");
+
+  pulseAvatar();
+
+  setTimeout(() => {
+    destinyWhisper.classList.remove("destiny-show");
+  }, 2600);
+}
+
+/* XP Burst */
 
 function orbitXpBurst(circle, label) {
-  // cleanup old bursts (bugfix)
   circle.querySelectorAll(".xp-burst").forEach((el) => el.remove());
-
   const span = document.createElement("div");
   span.className = "xp-burst";
   span.textContent = label || "+10";
@@ -470,9 +582,7 @@ function orbitXpBurst(circle, label) {
   setTimeout(() => span.remove(), 600);
 }
 
-/* ------------------------------------------------------
-   TICKER
------------------------------------------------------- */
+/* Ticker */
 
 function updateTicker() {
   const segments = [];
@@ -497,7 +607,7 @@ function updateTicker() {
   const proj = computeProjection();
   if (proj.lifeProb != null) {
     segments.push(
-      `PROJ: LIFE ${proj.lifeProb}% • BODY ${proj.bodyProb}% • OVERALL ${proj.overallProb}%`
+      `PROJ: LIFE ${proj.lifeProb}% • BODY ${proj.bodyProb}% • OVERALL ${proj.overallProb}% • SCORE~${proj.projectedScore}`
     );
   }
 
@@ -514,9 +624,7 @@ function updateTicker() {
   tickerInner.style.animation = "ticker-scroll 30s linear infinite";
 }
 
-/* ------------------------------------------------------
-   MODAL
------------------------------------------------------- */
+/* Modal */
 
 function openDay(dayNumber) {
   data.currentDay = dayNumber;
@@ -584,11 +692,109 @@ modalBackdrop.addEventListener("click", (e) => {
   if (e.target === modalBackdrop) modalBackdrop.style.display = "none";
 });
 
-/* ------------------------------------------------------
-   EVENTS – ORBIT NAV & DOUBLE TAP
------------------------------------------------------- */
+/* Holo Console */
 
-// Life orbit navigation
+if (holoConsoleToggle && holoConsole) {
+  holoConsoleToggle.addEventListener("click", () => {
+    holoConsoleOpen = !holoConsoleOpen;
+    holoConsole.classList.toggle("open", holoConsoleOpen);
+    if (holoConsoleOpen) {
+      updateHoloConsole();
+      showDestinyWhisper();
+    }
+  });
+}
+
+function updateHoloConsole() {
+  const omni = computeOmniScore();
+  const ghost = data.ghostDistance;
+  const streak = data.streak || 0;
+  const today = data.days[data.currentDay];
+  const proj = computeProjection();
+
+  const todayLife = today.lifeScore || 0;
+  const todayBody = today.bodyScore || 0;
+
+  if (hcOmni) hcOmni.textContent = omni;
+  if (hcGhost) hcGhost.textContent = `${ghost.toFixed(2)} AU`;
+  if (hcStreak) hcStreak.textContent = streak;
+  if (hcToday) hcToday.textContent = `${todayLife} / ${todayBody}`;
+
+  if (hcLifeProb)
+    hcLifeProb.textContent =
+      proj.lifeProb == null ? "—" : `${proj.lifeProb}%`;
+  if (hcBodyProb)
+    hcBodyProb.textContent =
+      proj.bodyProb == null ? "—" : `${proj.bodyProb}%`;
+  if (hcOverallProb)
+    hcOverallProb.textContent =
+      proj.overallProb == null ? "—" : `${proj.overallProb}%`;
+  if (hcProjected)
+    hcProjected.textContent =
+      proj.projectedScore == null ? "—" : proj.projectedScore;
+
+  // Last PR
+  let lastPrDay = null;
+  for (let i = 1; i <= 90; i++) {
+    if (data.days[i].pr) lastPrDay = i;
+  }
+  if (hcLastPr)
+    hcLastPr.textContent = lastPrDay ? `Day ${lastPrDay}` : "—";
+
+  // Ghost range & sparkline
+  if (ghostSparkline && hcGhostRange) {
+    ghostSparkline.innerHTML = "";
+    const values = [];
+    for (let i = 1; i <= 90; i++) {
+      const d = data.days[i];
+      if (typeof d.ghostDistanceAfter === "number") {
+        values.push(d.ghostDistanceAfter);
+      }
+    }
+    if (values.length === 0) {
+      hcGhostRange.textContent = "—";
+    } else {
+      const first = values[0];
+      const last = values[values.length - 1];
+      hcGhostRange.textContent = `${first.toFixed(2)} → ${last.toFixed(2)} AU`;
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const steps = 30;
+      for (let i = 0; i < steps; i++) {
+        const idx = Math.floor((i / (steps - 1)) * (values.length - 1));
+        const v = values[idx];
+        const bar = document.createElement("div");
+        bar.className = "ghost-bar";
+        const norm = max === min ? 0.5 : (v - min) / (max - min);
+        const h = 12 + norm * 24;
+        bar.style.height = `${h}px`;
+        if (idx === values.length - 1) bar.classList.add("active");
+        ghostSparkline.appendChild(bar);
+      }
+    }
+  }
+
+  // Life / Body load bars
+  let totalLife = 0;
+  let totalBody = 0;
+  for (let i = 1; i <= 90; i++) {
+    const d = data.days[i];
+    totalLife += d.lifeScore || 0;
+    totalBody += d.bodyScore || 0;
+  }
+  const maxLife = LIFE_ORBITS.length * 10 * 90;
+  const maxBody = BODY_ORBITS.length * 10 * 90;
+  const lifeLoadRatio = maxLife ? clamp(totalLife / maxLife, 0, 1) : 0;
+  const bodyLoadRatio = maxBody ? clamp(totalBody / maxBody, 0, 1) : 0;
+
+  if (hcLifeLoad)
+    hcLifeLoad.style.width = `${Math.round(lifeLoadRatio * 100)}%`;
+  if (hcBodyLoad)
+    hcBodyLoad.style.width = `${Math.round(bodyLoadRatio * 100)}%`;
+}
+
+/* Orbit navigation & double tap */
+
 lifePrev.addEventListener("click", () => {
   currentLifeIndex =
     (currentLifeIndex - 1 + LIFE_ORBITS.length) % LIFE_ORBITS.length;
@@ -600,7 +806,6 @@ lifeNext.addEventListener("click", () => {
   renderLifeOrbit();
 });
 
-// Body orbit navigation
 bodyPrev.addEventListener("click", () => {
   currentBodyIndex =
     (currentBodyIndex - 1 + BODY_ORBITS.length) % BODY_ORBITS.length;
@@ -612,11 +817,11 @@ bodyNext.addEventListener("click", () => {
   renderBodyOrbit();
 });
 
-// Double-tap LIFE
+/* Double-tap Life */
+
 lifeCircle.addEventListener("click", () => {
   const now = Date.now();
   const idx = currentLifeIndex;
-
   if (
     lastTap.type === "life" &&
     lastTap.index === idx &&
@@ -645,14 +850,15 @@ function toggleLifeOrbit(index) {
   renderPredictions();
   updateTicker();
   updateHologramLine();
+  updateHoloConsole();
   orbitXpBurst(lifeCircle, d.lifeDone[name] ? "+10" : "0");
 }
 
-// Double-tap BODY
+/* Double-tap Body */
+
 bodyCircle.addEventListener("click", () => {
   const now = Date.now();
   const idx = currentBodyIndex;
-
   if (
     lastTap.type === "body" &&
     lastTap.index === idx &&
@@ -681,12 +887,17 @@ function toggleBodyOrbit(index) {
   renderPredictions();
   updateTicker();
   updateHologramLine();
+  updateHoloConsole();
   orbitXpBurst(bodyCircle, d.bodyDone[name] ? "+10" : "0");
 }
 
-/* ------------------------------------------------------
-   FINALIZE DAY
------------------------------------------------------- */
+/* Hologram Destiny Whisper trigger */
+
+if (holoLine) {
+  holoLine.addEventListener("click", showDestinyWhisper);
+}
+
+/* Finalize Day */
 
 btnFinalizeDay.addEventListener("click", () => {
   const d = data.days[data.currentDay];
@@ -695,7 +906,6 @@ btnFinalizeDay.addEventListener("click", () => {
     return;
   }
 
-  // Varaus jos täysin tyhjä päivä
   if (
     d.lifeScore === 0 &&
     d.bodyScore === 0 &&
@@ -708,10 +918,8 @@ btnFinalizeDay.addEventListener("click", () => {
     if (!ok) return;
   }
 
-  // varmuuden vuoksi
   recomputeDay(data.currentDay);
 
-  // PR-check
   let best = 0;
   for (let i = 1; i <= 90; i++) {
     if (i === data.currentDay) continue;
@@ -719,13 +927,11 @@ btnFinalizeDay.addEventListener("click", () => {
   }
   d.pr = d.totalScore > best && d.totalScore > 0;
 
-  // Ghost update
   const delta = computeGhostDelta(d);
   d.ghostDelta = delta;
   data.ghostDistance = clamp(data.ghostDistance + delta, 0.2, 3.0);
   d.ghostDistanceAfter = data.ghostDistance;
 
-  // streak
   if (data.lastCompletedDay === data.currentDay - 1) data.streak++;
   else data.streak = 1;
   data.lastCompletedDay = data.currentDay;
@@ -739,7 +945,6 @@ btnFinalizeDay.addEventListener("click", () => {
   updateAll();
 });
 
-/* HUD flash */
 function flashHUD() {
   document.querySelectorAll(".hud-chip").forEach((chip) => {
     chip.classList.add("flash");
@@ -747,9 +952,7 @@ function flashHUD() {
   });
 }
 
-/* ------------------------------------------------------
-   RESET
------------------------------------------------------- */
+/* Reset */
 
 btnReset.addEventListener("click", () => {
   if (!confirm("Reset Bloodliner Prime Hub? Kaikki data poistetaan.")) return;
@@ -757,14 +960,10 @@ btnReset.addEventListener("click", () => {
   location.reload();
 });
 
-/* ------------------------------------------------------
-   MASTER UPDATE
------------------------------------------------------- */
+/* Master update */
 
 function updateAll() {
-  for (let i = 1; i <= 90; i++) {
-    recomputeDay(i);
-  }
+  for (let i = 1; i <= 90; i++) recomputeDay(i);
   save();
   renderHUD();
   renderLifeOrbit();
@@ -773,7 +972,9 @@ function updateAll() {
   renderPredictions();
   updateTicker();
   updateHologramLine();
+  updateHoloConsole();
 }
 
 /* INIT */
+
 updateAll();
