@@ -6,9 +6,9 @@
   --bg: #020617;
   --panel: #020617;
   --border: #1f2937;
-  --accent-life: #22c55e;  /* Spotify green */
-  --accent-body: #38bdf8;  /* ESPN blue */
-  --accent-core: #ef4444;  /* Netflix/Tesla Red */
+  --accent-life: #22c55e;
+  --accent-body: #38bdf8;
+  --accent-core: #ef4444;
   --text-main: #f9fafb;
   --text-muted: #9ca3af;
 }
@@ -106,14 +106,60 @@ body {
   transform: translateY(-1px);
 }
 
-/* Hologrammi-lanka */
+/* HOLO WRAPPER */
+
 #holo-wrapper {
-  padding: 2px 10px;
+  position: relative;
+  padding: 6px 10px 2px;
   display: flex;
   justify-content: center;
+  align-items: flex-end;
+  gap: 12px;
   background: radial-gradient(circle at top, #020617 0, #020617 60%, #000 100%);
   border-bottom: 1px solid #0f172a;
+  overflow: visible;
 }
+
+/* Holo console toggle strip */
+
+#holo-console-toggle {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  width: 46px;
+  height: 52px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,0.9);
+  background: radial-gradient(circle at top, rgba(15,23,42,0.95) 0, #020617 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  padding: 0;
+  color: #e5e7eb;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.7);
+}
+
+.console-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: radial-gradient(circle, #22c55e 0, #16a34a 50%, transparent 100%);
+  box-shadow:
+    0 0 5px rgba(34,197,94,0.8),
+    0 0 12px rgba(56,189,248,0.9);
+}
+
+.console-label {
+  opacity: 0.8;
+}
+
+/* Avatar + Hologram line */
 
 #hologram-line {
   height: 3px;
@@ -132,6 +178,7 @@ body {
     opacity .35s ease,
     box-shadow .25s ease,
     filter .25s ease;
+  cursor: pointer;
 }
 
 #hologram-line.flash {
@@ -142,7 +189,273 @@ body {
   opacity: 1;
 }
 
-/* Ticker */
+/* Avatar */
+
+#holo-avatar {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-32px);
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.8));
+  transition:
+    transform 0.35s ease,
+    filter 0.35s ease,
+    opacity 0.35s ease;
+  opacity: 0.85;
+}
+
+.avatar-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-aura {
+  fill: none;
+  stroke: rgba(56, 189, 248, 0.2);
+  stroke-width: 2;
+}
+
+.avatar-head {
+  fill: rgba(56, 189, 248, 0.8);
+}
+
+.avatar-torso {
+  fill: rgba(15, 23, 42, 0.95);
+  stroke: rgba(56, 189, 248, 0.9);
+  stroke-width: 1;
+}
+
+.avatar-arm {
+  stroke: rgba(56, 189, 248, 0.6);
+  stroke-width: 1.3;
+}
+
+.avatar-core-line {
+  stroke: rgba(34, 197, 94, 0.9);
+  stroke-width: 1.4;
+}
+
+.avatar-state-base {
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6));
+  opacity: 0.8;
+}
+
+.avatar-state-align {
+  filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.9));
+  transform: translateX(-50%) translateY(-36px) scale(1.03);
+  opacity: 0.95;
+}
+
+.avatar-state-momentum {
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 1));
+  transform: translateX(-50%) translateY(-40px) scale(1.07);
+  opacity: 1;
+}
+
+.avatar-state-ascend {
+  filter:
+    drop-shadow(0 0 20px rgba(239, 68, 68, 0.9))
+    drop-shadow(0 0 32px rgba(234, 179, 8, 0.9));
+  transform: translateX(-50%) translateY(-44px) scale(1.12);
+  opacity: 1;
+}
+
+/* Avatar pulse */
+
+.avatar-pulse {
+  animation: avatarPulse 0.55s ease-out;
+}
+
+@keyframes avatarPulse {
+  0%   { transform: translateX(-50%) translateY(-40px) scale(1.0); opacity: 0.8; }
+  40%  { transform: translateX(-50%) translateY(-43px) scale(1.12); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-40px) scale(1.05); opacity: 0.9; }
+}
+
+/* Destiny Whisper */
+
+#destiny-whisper {
+  position: absolute;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid #1f2937;
+  font-size: 10px;
+  color: #e5e7eb;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6);
+}
+
+#destiny-whisper.destiny-show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Holo Console panel */
+
+#holo-console {
+  position: fixed;
+  top: 56px;
+  bottom: 10px;
+  left: 8px;
+  width: 260px;
+  border-radius: 18px;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  background:
+    radial-gradient(circle at top, rgba(239, 68, 68, 0.35), transparent 55%),
+    radial-gradient(circle at bottom, rgba(56, 189, 248, 0.25), #020617 80%);
+  box-shadow:
+    0 24px 60px rgba(0,0,0,0.95),
+    0 0 25px rgba(248,113,113,0.5);
+  transform: translateX(-115%);
+  opacity: 0;
+  transition:
+    transform 0.28s ease-out,
+    opacity 0.24s ease-out;
+  overflow: hidden;
+  pointer-events: none;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 45;
+}
+
+#holo-console.open {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.holo-console-inner {
+  padding: 10px 10px 12px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.holo-console-header {
+  margin-bottom: 6px;
+}
+
+.hc-title {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.hc-sub {
+  display:block;
+  font-size:9px;
+  color:var(--text-muted);
+}
+
+.holo-section {
+  border-radius: 12px;
+  border:1px solid rgba(15,23,42,0.9);
+  background: radial-gradient(circle at top, rgba(15,23,42,0.95), #020617);
+  padding:6px 8px;
+  margin-top:6px;
+  font-size:10px;
+}
+
+.holo-section-title {
+  font-size:9px;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:#e5e7eb;
+  margin-bottom:4px;
+}
+
+.holo-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:1px 0;
+}
+
+.holo-row.small span {
+  font-size:9px;
+}
+
+.holo-row span {
+  color:var(--text-muted);
+}
+
+.holo-row strong {
+  font-size:11px;
+}
+
+/* Ghost sparkline */
+
+#ghost-sparkline {
+  display:flex;
+  gap:2px;
+  align-items:flex-end;
+  height:40px;
+  margin:4px 0 2px;
+}
+
+.ghost-bar {
+  width:4px;
+  border-radius:999px;
+  background:linear-gradient(to top,#ef4444,#38bdf8);
+  opacity:0.4;
+}
+
+.ghost-bar.active {
+  opacity:0.9;
+}
+
+/* Life / Body Load bars */
+
+.holo-bars {
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.holo-bar span {
+  font-size:9px;
+  color:var(--text-muted);
+}
+
+.holo-bar-meter {
+  margin-top:2px;
+  width:100%;
+  height:6px;
+  border-radius:999px;
+  background:#020617;
+  border:1px solid #111827;
+  overflow:hidden;
+}
+
+.holo-bar-fill {
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  transition:width 0.25s ease;
+}
+
+.holo-bar-fill.life {
+  background:linear-gradient(90deg,#22c55e,#a3e635);
+}
+
+.holo-bar-fill.body {
+  background:linear-gradient(90deg,#38bdf8,#0ea5e9);
+}
+
+/* TICKER */
+
 #ticker-bar {
   position: sticky;
   top: 48px;
@@ -170,6 +483,7 @@ body {
 }
 
 /* Layout */
+
 #layout {
   display: flex;
   flex-direction: column;
@@ -200,10 +514,17 @@ body {
 }
 
 /* Orbit Circle */
+
 .orbit-row {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.orbit-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
 }
 
 .orbit-nav-btn {
@@ -234,6 +555,7 @@ body {
   cursor: pointer;
   box-shadow: 0 16px 30px rgba(15,23,42,0.9);
   transition: transform 0.15s ease;
+  position: relative;
 }
 
 .orbit-circle.body {
@@ -254,6 +576,24 @@ body {
   font-size: 11px;
 }
 
+.orbit-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.orbit-today {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.orbit-xp {
+  font-size: 10px;
+  color: #e5e7eb;
+}
+
+/* Orbit tags */
+
 .orbit-tags {
   display: flex;
   flex-wrap: wrap;
@@ -270,6 +610,7 @@ body {
 }
 
 /* XP Burst */
+
 .xp-burst {
   position: absolute;
   font-size: 11px;
@@ -286,6 +627,7 @@ body {
 }
 
 /* 90 Season Grid */
+
 #day-grid {
   display: grid;
   grid-template-columns: repeat(10,1fr);
@@ -333,6 +675,8 @@ body {
   box-shadow:0 0 10px rgba(250,204,21,0.85);
 }
 
+/* Predictions */
+
 .predictions {
   display:flex;
   gap:6px;
@@ -352,6 +696,8 @@ body {
   display:block;
   font-size:12px;
 }
+
+/* Buttons */
 
 .btn {
   border:none;
@@ -379,6 +725,10 @@ body {
 }
 
 .btn.fullwidth { width:100%; }
+
+.btn.big { padding:10px 14px; }
+
+/* Modal */
 
 #day-modal-backdrop {
   position:fixed;
@@ -414,7 +764,39 @@ body {
   font-size:12px;
 }
 
-/* Mobile Tweaks */
+#modal-life-list,
+#modal-body-list {
+  list-style:none;
+  padding-left:0;
+  margin:4px 0 6px;
+}
+
+/* Desktop layout */
+
+@media (min-width:900px) {
+  #layout {
+    display:grid;
+    grid-template-columns:1.1fr 1.1fr;
+    grid-template-rows:auto auto;
+    gap:10px;
+    padding:10px;
+  }
+  #life-card {
+    grid-column:1 / 2;
+    grid-row:1 / 2;
+  }
+  #body-card {
+    grid-column:2 / 3;
+    grid-row:1 / 2;
+  }
+  #season-card {
+    grid-column:1 / 3;
+    grid-row:2 / 3;
+  }
+}
+
+/* Mobile tweaks */
+
 @media (max-width:520px) {
   #hud {
     flex-wrap:wrap;
