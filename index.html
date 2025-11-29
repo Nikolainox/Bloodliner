@@ -48,9 +48,112 @@
     </div>
   </header>
 
-  <!-- GHOST HOLOGRAM LINE -->
+  <!-- HOLOGRAMMI + AVATAR + DESTINY WHISPER + SCOREBOARD STRIP -->
   <div id="holo-wrapper">
+
+    <!-- Touch strip: avaa Holo Console -->
+    <button id="holo-console-toggle" aria-label="Open Holo Console">
+      <span class="console-dot"></span>
+      <span class="console-label">HOLO</span>
+    </button>
+
+    <!-- Avatar (Jarvis x Samurai x Spirit) -->
+    <div id="holo-avatar" class="avatar-state-base">
+      <svg viewBox="0 0 80 80" class="avatar-svg" aria-hidden="true">
+        <circle cx="40" cy="40" r="26" class="avatar-aura" />
+        <circle cx="40" cy="24" r="7" class="avatar-head" />
+        <path d="M30 34 L50 34 L46 50 L34 50 Z" class="avatar-torso" />
+        <path d="M28 35 L22 46" class="avatar-arm" />
+        <path d="M52 35 L58 46" class="avatar-arm" />
+        <line x1="40" y1="34" x2="40" y2="52" class="avatar-core-line" />
+      </svg>
+    </div>
+
     <div id="hologram-line"></div>
+    <div id="destiny-whisper"></div>
+
+    <!-- HOLO CONSOLE SCOREBOARD PANEL -->
+    <aside id="holo-console" aria-hidden="true">
+      <div class="holo-console-inner">
+        <div class="holo-console-header">
+          <span class="hc-title">BLOODLINER • HOLO CONSOLE</span>
+          <span class="hc-sub">Netflix x Jarvis scoreboard</span>
+        </div>
+
+        <div class="holo-section">
+          <div class="holo-section-title">LIVE STATUS</div>
+          <div class="holo-row">
+            <span>OmniScore</span>
+            <strong id="hc-omni">0</strong>
+          </div>
+          <div class="holo-row">
+            <span>Ghost Distance</span>
+            <strong id="hc-ghost">1.00 AU</strong>
+          </div>
+          <div class="holo-row">
+            <span>Streak</span>
+            <strong id="hc-streak">0</strong>
+          </div>
+          <div class="holo-row">
+            <span>Today Life / Body</span>
+            <strong id="hc-today">0 / 0</strong>
+          </div>
+          <div class="holo-row">
+            <span>Last PR Day</span>
+            <strong id="hc-last-pr">—</strong>
+          </div>
+        </div>
+
+        <div class="holo-section">
+          <div class="holo-section-title">TRAJECTORY</div>
+          <div class="holo-row">
+            <span>Life Probability</span>
+            <strong id="hc-life-prob">—</strong>
+          </div>
+          <div class="holo-row">
+            <span>Body Probability</span>
+            <strong id="hc-body-prob">—</strong>
+          </div>
+          <div class="holo-row">
+            <span>Overall</span>
+            <strong id="hc-overall-prob">—</strong>
+          </div>
+          <div class="holo-row">
+            <span>Projected Score (90d)</span>
+            <strong id="hc-projected">—</strong>
+          </div>
+        </div>
+
+        <div class="holo-section">
+          <div class="holo-section-title">GHOST LINE • HISTORY</div>
+          <div id="ghost-sparkline"></div>
+          <div class="holo-row small">
+            <span>First / Latest</span>
+            <strong id="hc-ghost-range">—</strong>
+          </div>
+        </div>
+
+        <div class="holo-section">
+          <div class="holo-section-title">LIFE / BODY LOAD</div>
+          <div class="holo-bars">
+            <div class="holo-bar">
+              <span>Life Load</span>
+              <div class="holo-bar-meter">
+                <div id="hc-life-load" class="holo-bar-fill life"></div>
+              </div>
+            </div>
+            <div class="holo-bar">
+              <span>Body Load</span>
+              <div class="holo-bar-meter">
+                <div id="hc-body-load" class="holo-bar-fill body"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
   </div>
 
   <!-- ESPN/NETFLIX TICKER -->
